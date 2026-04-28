@@ -2,32 +2,43 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ComplaintTable from "../../components/complaints/ComplaintTable";
-
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import PageLoader from "../../components/common/PageLoader";
 function DashboardPage() {
   const { user } = useContext(AuthContext);
 
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [pageLoading, setPageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("toutes");
   const [channelFilter, setChannelFilter] = useState("Tous");
   const [categoryFilter, setCategoryFilter] = useState("Toutes");
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [periodFilter, setPeriodFilter] = useState("30 derniers jours");
   const [searchTerm, setSearchTerm] = useState("");
-  const [hovered, setHovered] = useState(false);
 
-  const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [hoveredReset, setHoveredReset] = useState(false);
   const [hoveredChannel, setHoveredChannel] = useState(null);
+  const [hoveredStat, setHoveredStat] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 16;
+  const runWithLoader = (callback) => {
+  setPageLoading(true);
 
-  if (user?.mustChangePassword) {
-    return <Navigate to="/change-password" replace />;
-  }
-
+  setTimeout(() => {
+    callback();
+    setPageLoading(false);
+  }, 450);
+};
   useEffect(() => {
     async function loadComplaints() {
       try {
@@ -62,6 +73,10 @@ function DashboardPage() {
     loadComplaints();
   }, [user?.role, user?.assignedCategory]);
 
+  if (user?.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   const resetFilters = () => {
     setChannelFilter("Tous");
     setCategoryFilter("Toutes");
@@ -78,7 +93,9 @@ function DashboardPage() {
       item.category === "" ||
       item.category === "NON CLASSÉE" ||
       item.category === "Non classée" ||
-      item.category === "Non classé"
+      item.category === "Non classé" ||
+      item.category === "non_classée" ||
+      item.category === "non_classee"
     );
   };
 
@@ -105,7 +122,7 @@ function DashboardPage() {
   const statusOptions = ["Tous", "EN_ATTENTE", "EN_COURS", "TRAITEE"];
   const periodOptions = ["30 derniers jours", "7 derniers jours", "Aujourd'hui"];
 
-  const filteredComplaints = useMemo(() => {
+  const baseFilteredComplaints = useMemo(() => {
     return complaints.filter((item) => {
       const classified = !isNotClassified(item);
       const formattedSource = formatSource(item.source);
@@ -119,10 +136,6 @@ function DashboardPage() {
       }
 
       if (categoryFilter !== "Toutes" && itemCategory !== categoryFilter) {
-        return false;
-      }
-
-      if (statusFilter !== "Tous" && item.status !== statusFilter) {
         return false;
       }
 
@@ -162,10 +175,27 @@ function DashboardPage() {
     activeTab,
     channelFilter,
     categoryFilter,
-    statusFilter,
     periodFilter,
     searchTerm,
   ]);
+
+  const filteredComplaints = useMemo(() => {
+    if (statusFilter === "Tous") return baseFilteredComplaints;
+    return baseFilteredComplaints.filter((item) => item.status === statusFilter);
+  }, [baseFilteredComplaints, statusFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      total: baseFilteredComplaints.length,
+      enCours: baseFilteredComplaints.filter((item) => item.status === "EN_COURS")
+        .length,
+      traitees: baseFilteredComplaints.filter((item) => item.status === "TRAITEE")
+        .length,
+      enAttente: baseFilteredComplaints.filter(
+        (item) => item.status === "EN_ATTENTE"
+      ).length,
+    };
+  }, [baseFilteredComplaints]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -189,7 +219,6 @@ function DashboardPage() {
     return filteredComplaints.slice(start, end);
   }, [filteredComplaints, currentPage]);
 
-  // Important: chart catégories utilise complaints pour garder toutes les barres visibles
   const categoryStats = useMemo(() => {
     const counts = {};
 
@@ -198,26 +227,31 @@ function DashboardPage() {
       counts[category] = (counts[category] || 0) + 1;
     });
 
-    const colors = [
-      "#3f8d69",
-      "#5d97e6",
-      "#7ebd85",
-      "#8dd1b0",
-      "#a9d798",
-      "#e97667",
+    const categoryOrder = [
+      "SERVICE CLIENT",
+      "SINISTRE AUTO",
+      "SINISTRE VIE",
+      "SINISTRE IRDS",
+      "NON CLASSÉE",
     ];
 
-    return Object.entries(counts)
-      .map(([label, value], index) => ({
+    const categoryColors = {
+      "SERVICE CLIENT": "#3f8d69",
+      "SINISTRE AUTO": "#5d97e6",
+      "SINISTRE VIE": "#7ebd85",
+      "SINISTRE IRDS": "#a9d798",
+      "NON CLASSÉE": "#e97667",
+    };
+
+    return categoryOrder
+      .filter((label) => counts[label])
+      .map((label) => ({
         label,
-        value,
-        color: colors[index % colors.length],
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+        value: counts[label],
+        color: categoryColors[label],
+      }));
   }, [complaints]);
 
-  // Important: chart canaux utilise complaints pour garder tous les canaux visibles
   const channelStats = useMemo(() => {
     const counts = {};
 
@@ -238,11 +272,6 @@ function DashboardPage() {
       .sort((a, b) => b.value - a.value);
   }, [complaints]);
 
-  const maxCategoryValue = Math.max(
-    ...categoryStats.map((item) => item.value),
-    1
-  );
-
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(1, prev - 1));
   };
@@ -251,40 +280,42 @@ function DashboardPage() {
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   };
 
-  return (
-    <div style={styles.page}>
-      {loading && <p>Chargement...</p>}
-      {error && <p style={styles.errorText}>{error}</p>}
+ return (
+  <div style={styles.page}>
+    {pageLoading && <PageLoader />}
 
-      {!loading && !error && (
-        <>
-          <div style={styles.filtersBar}>
-            <div style={styles.filtersLeft}>
-              <CompactFilter
-                label="Canal"
-                value={channelFilter}
-                onChange={setChannelFilter}
-                options={channelOptions}
-              />
+    {loading && <p>Chargement...</p>}
+    {error && <p style={styles.errorText}>{error}</p>}
+
+    {!loading && !error && (
+      <>
+        <div style={styles.filtersBar}>
+          <div style={styles.filtersLeft}>
+            <CompactFilter
+              label="Canal"
+              value={channelFilter}
+              onChange={(value) => runWithLoader(() => setChannelFilter(value))}
+              options={channelOptions}
+            />
 
               <CompactFilter
                 label="Catégorie"
                 value={categoryFilter}
-                onChange={setCategoryFilter}
+                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
                 options={categoryOptions}
               />
 
               <CompactFilter
                 label="Statut"
                 value={statusFilter}
-                onChange={setStatusFilter}
+                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
                 options={statusOptions}
               />
 
               <CompactFilter
                 label="Période"
                 value={periodFilter}
-                onChange={setPeriodFilter}
+                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
                 options={periodOptions}
               />
             </div>
@@ -304,10 +335,10 @@ function DashboardPage() {
               <button
                 style={{
                   ...styles.resetButtonPro,
-                  ...(hovered ? styles.resetButtonProHover : {}),
+                  ...(hoveredReset ? styles.resetButtonProHover : {}),
                 }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
+                onMouseEnter={() => setHoveredReset(true)}
+                onMouseLeave={() => setHoveredReset(false)}
                 onClick={resetFilters}
               >
                 <span style={styles.resetIcon}>↻</span>
@@ -319,36 +350,46 @@ function DashboardPage() {
           <div style={styles.statsGrid}>
             <StatCard
               title="Total Réclamations"
-              value={filteredComplaints.length}
+              value={stats.total}
               color="#7aa9ff"
+              active={statusFilter === "Tous"}
+              hovered={hoveredStat === "Tous"}
+              onMouseEnter={() => setHoveredStat("Tous")}
+              onMouseLeave={() => setHoveredStat(null)}
+              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
             />
 
             <StatCard
               title="En cours"
-              value={
-                filteredComplaints.filter((item) => item.status === "EN_COURS")
-                  .length
-              }
+              value={stats.enCours}
               color="#e8be59"
+              active={statusFilter === "EN_COURS"}
+              hovered={hoveredStat === "EN_COURS"}
+              onMouseEnter={() => setHoveredStat("EN_COURS")}
+              onMouseLeave={() => setHoveredStat(null)}
+              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
             />
 
             <StatCard
               title="Traitées"
-              value={
-                filteredComplaints.filter((item) => item.status === "TRAITEE")
-                  .length
-              }
+              value={stats.traitees}
               color="#65b36f"
+              active={statusFilter === "TRAITEE"}
+              hovered={hoveredStat === "TRAITEE"}
+              onMouseEnter={() => setHoveredStat("TRAITEE")}
+              onMouseLeave={() => setHoveredStat(null)}
+              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
             />
 
             <StatCard
               title="En attente"
-              value={
-                filteredComplaints.filter(
-                  (item) => item.status === "EN_ATTENTE"
-                ).length
-              }
+              value={stats.enAttente}
               color="#e97667"
+              active={statusFilter === "EN_ATTENTE"}
+              hovered={hoveredStat === "EN_ATTENTE"}
+              onMouseEnter={() => setHoveredStat("EN_ATTENTE")}
+              onMouseLeave={() => setHoveredStat(null)}
+              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
             />
           </div>
 
@@ -360,42 +401,58 @@ function DashboardPage() {
                 {categoryFilter !== "Toutes" && (
                   <button
                     style={styles.clearChartFilter}
-                    onClick={() => setCategoryFilter("Toutes")}
+                    onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
                   >
                     Toutes
                   </button>
                 )}
               </div>
 
-              <div style={styles.categoryBars}>
-                {categoryStats.length > 0 ? (
-                  categoryStats.map((item) => (
-                    <CategoryBar
-                      key={item.label}
-                      label={item.label}
-                      value={item.value}
-                      height={Math.max(
-                        (item.value / maxCategoryValue) * 120,
-                        35
-                      )}
-                      color={item.color}
-                      isActive={
-                        categoryFilter === "Toutes" ||
-                        categoryFilter === item.label
+              <div style={styles.pieChartBox}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={categoryStats}
+                      dataKey="value"
+                      nameKey="label"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={95}
+                      label={({ label, percent }) =>
+                        `${label} ${(percent * 100).toFixed(0)}%`
                       }
-                      isHovered={hoveredCategory === item.label}
-                      onMouseEnter={() => setHoveredCategory(item.label)}
-                      onMouseLeave={() => setHoveredCategory(null)}
-                      onClick={() =>
+                      onClick={(data) =>
                         setCategoryFilter(
-                          categoryFilter === item.label ? "Toutes" : item.label
+                          categoryFilter === data.label
+                            ? "Toutes"
+                            : data.label
                         )
                       }
+                    >
+                      {categoryStats.map((entry) => (
+                        <Cell
+                          key={entry.label}
+                          fill={entry.color}
+                          opacity={
+                            categoryFilter === "Toutes" ||
+                            categoryFilter === entry.label
+                              ? 1
+                              : 0.35
+                          }
+                          style={{ cursor: "pointer" }}
+                        />
+                      ))}
+                    </Pie>
+
+                    <Tooltip
+                      formatter={(value, name) => [
+                        `${value} réclamation(s)`,
+                        name,
+                      ]}
                     />
-                  ))
-                ) : (
-                  <p style={styles.emptyText}>Aucune donnée catégorie.</p>
-                )}
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -535,11 +592,37 @@ function CompactFilter({ label, value, onChange, options }) {
   );
 }
 
-function StatCard({ title, value, color }) {
+function StatCard({
+  title,
+  value,
+  color,
+  active,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}) {
   return (
-    <div style={styles.statCard}>
+    <div
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        ...styles.statCard,
+        ...(active ? styles.statCardActive : {}),
+        ...(hovered ? styles.statCardHover : {}),
+      }}
+      title={`Filtrer par ${title}`}
+    >
       <div style={styles.statLeft}>
-        <div style={{ ...styles.statIcon, background: `${color}22`, color }}>
+        <div
+          style={{
+            ...styles.statIcon,
+            background: `${color}22`,
+            color,
+            boxShadow: active ? `0 10px 22px ${color}44` : "none",
+          }}
+        >
           ●
         </div>
 
@@ -554,76 +637,10 @@ function StatCard({ title, value, color }) {
           style={{
             ...styles.progressFill,
             background: `linear-gradient(90deg, ${color}, ${color}99)`,
-            width: "64%",
+            width: value > 0 ? "64%" : "0%",
           }}
         />
       </div>
-    </div>
-  );
-}
-
-function CategoryBar({
-  label,
-  value,
-  height,
-  color,
-  onClick,
-  isActive,
-  isHovered,
-  onMouseEnter,
-  onMouseLeave,
-}) {
-  const softColor = `${color}55`;
-
-  return (
-    <div
-      style={{
-        ...styles.categoryItem,
-        cursor: "pointer",
-        transform: isHovered
-          ? "translateY(-6px) scale(1.04)"
-          : isActive
-          ? "scale(1)"
-          : "scale(0.98)",
-      }}
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      title={`Filtrer par ${label}`}
-    >
-      <div style={styles.tooltipWrap}>
-        {isHovered && (
-          <div style={styles.tooltip}>
-            <strong>{label}</strong>
-            <span>{value} réclamation(s)</span>
-          </div>
-        )}
-
-        <div
-          style={{
-            ...styles.categoryBar,
-            height,
-            background: isActive
-              ? `linear-gradient(180deg, ${color}, ${color}cc)`
-              : softColor,
-            boxShadow: isHovered
-              ? "0 12px 24px rgba(15,23,42,0.18)"
-              : "none",
-          }}
-        >
-          <span style={styles.categoryBarValue}>{value}</span>
-        </div>
-      </div>
-
-      <span
-        style={{
-          ...styles.categoryLabel,
-          color: isActive ? "#1e293b" : "#94a3b8",
-          fontWeight: isActive ? "700" : "500",
-        }}
-      >
-        {label}
-      </span>
     </div>
   );
 }
@@ -882,6 +899,20 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "12px",
+    cursor: "pointer",
+    border: "2px solid transparent",
+    transition: "all 0.25s ease",
+  },
+
+  statCardActive: {
+    border: "2px solid #166534",
+    boxShadow: "0 18px 36px rgba(22, 101, 52, 0.16)",
+    transform: "translateY(-3px)",
+  },
+
+  statCardHover: {
+    transform: "translateY(-5px)",
+    boxShadow: "0 18px 36px rgba(15, 23, 42, 0.12)",
   },
 
   statLeft: {
@@ -899,12 +930,14 @@ const styles = {
     justifyContent: "center",
     fontSize: "20px",
     fontWeight: "700",
+    transition: "all 0.25s ease",
   },
 
   statTitle: {
     margin: 0,
     color: "#475569",
     fontSize: "15px",
+    fontWeight: "600",
   },
 
   statValue: {
@@ -924,6 +957,7 @@ const styles = {
   progressFill: {
     height: "100%",
     borderRadius: "999px",
+    transition: "all 0.25s ease",
   },
 
   chartsGrid: {
@@ -937,7 +971,7 @@ const styles = {
     borderRadius: "24px",
     padding: "24px",
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
-    minHeight: "280px",
+    minHeight: "310px",
     overflow: "visible",
   },
 
@@ -945,13 +979,18 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: "22px",
+    marginBottom: "12px",
   },
 
   cardTitle: {
     margin: 0,
     fontSize: "18px",
     color: "#24324a",
+  },
+
+  pieChartBox: {
+    width: "100%",
+    height: "300px",
   },
 
   clearChartFilter: {
@@ -962,48 +1001,6 @@ const styles = {
     padding: "6px 12px",
     fontWeight: "700",
     cursor: "pointer",
-  },
-
-  categoryBars: {
-    minHeight: "190px",
-    display: "flex",
-    alignItems: "flex-end",
-    gap: "16px",
-    paddingTop: "22px",
-  },
-
-  categoryItem: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-    flex: 1,
-    transition: "all 0.25s ease",
-  },
-
-  categoryBar: {
-  width: "56px",
-  minWidth: "56px",
-  borderRadius: "10px 10px 0 0",
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "center",
-  paddingTop: "10px",
-  boxSizing: "border-box",
-  transition: "all 0.25s ease",
-},
-
-  categoryBarValue: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: "16px",
-  },
-
-  categoryLabel: {
-    fontSize: "14px",
-    color: "#475569",
-    textAlign: "center",
-    transition: "all 0.25s ease",
   },
 
   channelRow: {
@@ -1053,34 +1050,9 @@ const styles = {
     transition: "all 0.25s ease",
   },
 
-  tooltipWrap: {
-  position: "relative",
-  display: "flex",
-  justifyContent: "center",
-  width: "64px",
-},
-
   tooltipWrapFull: {
     position: "relative",
     flex: 1,
-  },
-
-  tooltip: {
-    position: "absolute",
-    bottom: "100%",
-    marginBottom: "10px",
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "10px",
-    boxShadow: "0 12px 28px rgba(15,23,42,0.16)",
-    padding: "10px 12px",
-    minWidth: "150px",
-    zIndex: 20,
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-    fontSize: "13px",
-    color: "#1e293b",
   },
 
   tooltipChannel: {

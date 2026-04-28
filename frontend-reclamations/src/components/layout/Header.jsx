@@ -6,7 +6,7 @@ function Header() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(false);
-
+  const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -23,9 +23,17 @@ function Header() {
 
       <div style={styles.userMenuWrapper}>
         <div style={styles.userMenu} onClick={() => setOpenMenu(!openMenu)}>
-          <div style={styles.avatar}>
-            {user?.name?.charAt(0)?.toUpperCase() || "U"}
-          </div>
+          {localStorage.getItem("avatar") ? (
+  <img
+    src={localStorage.getItem("avatar")}
+    alt="avatar"
+    style={styles.avatarImage}
+  />
+) : (
+  <div style={styles.avatar}>
+    {user?.name?.charAt(0)?.toUpperCase() || "U"}
+  </div>
+)}
 
           <div>
             <p style={styles.userName}>{user?.name}</p>
@@ -58,8 +66,13 @@ function Header() {
 
 const styles = {
   header: {
-    height: "70px",
+    height: "78px",
     backgroundColor: "#ffffff",
+    flexShrink: 0,
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
+    background: "#ffffff",
     borderBottom: "1px solid #e2e8f0",
     display: "flex",
     alignItems: "center",
@@ -91,6 +104,13 @@ const styles = {
     fontSize: "12px",
     color: "#64748b",
   },
+  avatarImage: {
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  objectFit: "cover",
+  border: "2px solid #dcfce7",
+},
   avatar: {
     width: "40px",
     height: "40px",

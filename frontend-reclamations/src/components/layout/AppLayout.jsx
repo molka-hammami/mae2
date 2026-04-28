@@ -1,13 +1,13 @@
-import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { Outlet } from "react-router-dom";
 
 function AppLayout() {
   return (
-    <div style={styles.container}>
+    <div style={styles.layout}>
       <Sidebar />
 
-      <div style={styles.main}>
+      <div style={styles.mainArea}>
         <Header />
 
         <main style={styles.content}>
@@ -19,18 +19,24 @@ function AppLayout() {
 }
 
 const styles = {
-  container: {
+  layout: {
     display: "flex",
-    minHeight: "100vh",
-    backgroundColor: "#f1f5f9",
+    height: "100vh",
+    overflow: "hidden",
+    background: "#eef3f8",
   },
-  main: {
+
+  mainArea: {
     flex: 1,
     display: "flex",
     flexDirection: "column",
+    height: "100vh",
+    overflow: "hidden",
   },
+
   content: {
     flex: 1,
+    overflowY: "auto",
     padding: "24px",
   },
 };

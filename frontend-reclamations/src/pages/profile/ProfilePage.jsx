@@ -1,17 +1,18 @@
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
 function ProfilePage() {
   const { user } = useContext(AuthContext);
+  const fileInputRef = useRef(null);
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [avatar, setAvatar] = useState(
-    localStorage.getItem("avatar") || ""
-  );
+  const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
 
     reader.onloadend = () => {
@@ -19,29 +20,63 @@ function ProfilePage() {
       localStorage.setItem("avatar", reader.result);
     };
 
-    if (file) reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatar("");
+    localStorage.removeItem("avatar");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSave = () => {
-    alert("Profil mis à jour (démo)");
+    alert("Profil mis à jour avec succès");
   };
 
   return (
     <div style={styles.container}>
-      <h2>Mon profil</h2>
+      <h2 style={styles.title}>Mon profil</h2>
 
       <div style={styles.card}>
         <div style={styles.avatarSection}>
-          <img
-            src={
-              avatar ||
-              `https://ui-avatars.com/api/?name=${name}`
-            }
-            alt="avatar"
-            style={styles.avatar}
+          {avatar ? (
+            <img src={avatar} alt="avatar" style={styles.avatar} />
+          ) : (
+            <div style={styles.defaultAvatar}>
+              {name?.charAt(0)?.toUpperCase() || "A"}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            style={{ display: "none" }}
           />
 
-          <input type="file" onChange={handleImageChange} />
+          <div style={styles.photoButtons}>
+            <button
+              type="button"
+              style={styles.changePhotoBtn}
+              onClick={() => fileInputRef.current.click()}
+            >
+              Modifier la photo
+            </button>
+
+            {avatar && (
+              <button
+                type="button"
+                style={styles.removePhotoBtn}
+                onClick={handleRemovePhoto}
+              >
+                Supprimer
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={styles.form}>
@@ -61,12 +96,7 @@ function ProfilePage() {
             style={styles.input}
           />
 
-          <input
-            type="text"
-            value={user?.role}
-            disabled
-            style={styles.input}
-          />
+          <input type="text" value={user?.role || ""} disabled style={styles.input} />
 
           <button style={styles.button} onClick={handleSave}>
             Enregistrer
@@ -81,45 +111,101 @@ const styles = {
   container: {
     padding: "30px",
   },
+
+  title: {
+    marginBottom: "20px",
+    color: "#0f172a",
+  },
+
   card: {
     background: "#fff",
     padding: "30px",
-    borderRadius: "12px",
+    borderRadius: "14px",
     display: "flex",
-    gap: "40px",
+    gap: "50px",
     alignItems: "center",
     boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
   },
+
   avatarSection: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "10px",
+    gap: "14px",
+    minWidth: "220px",
   },
+
   avatar: {
-    width: "100px",
-    height: "100px",
+    width: "115px",
+    height: "115px",
     borderRadius: "50%",
     objectFit: "cover",
+    border: "4px solid #dcfce7",
   },
+
+  defaultAvatar: {
+    width: "115px",
+    height: "115px",
+    borderRadius: "50%",
+    backgroundColor: "#166534",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "44px",
+    fontWeight: "700",
+    border: "4px solid #dcfce7",
+  },
+
+  photoButtons: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+
+  changePhotoBtn: {
+    border: "none",
+    backgroundColor: "#166534",
+    color: "#ffffff",
+    padding: "9px 14px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  removePhotoBtn: {
+    border: "none",
+    backgroundColor: "#fee2e2",
+    color: "#b91c1c",
+    padding: "9px 14px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "15px",
-    width: "300px",
+    width: "320px",
   },
+
   input: {
-    padding: "10px",
+    padding: "11px 12px",
     borderRadius: "8px",
-    border: "1px solid #ccc",
+    border: "1px solid #cbd5e1",
+    fontSize: "14px",
   },
+
   button: {
     background: "#166534",
     color: "#fff",
-    padding: "10px",
+    padding: "11px",
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
+    fontWeight: "600",
   },
 };
 
