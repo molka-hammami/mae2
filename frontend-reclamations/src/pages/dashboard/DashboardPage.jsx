@@ -348,49 +348,39 @@ function DashboardPage() {
           </div>
 
           <div style={styles.statsGrid}>
-            <StatCard
-              title="Total Réclamations"
-              value={stats.total}
-              color="#7aa9ff"
-              active={statusFilter === "Tous"}
-              hovered={hoveredStat === "Tous"}
-              onMouseEnter={() => setHoveredStat("Tous")}
-              onMouseLeave={() => setHoveredStat(null)}
-              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
-            />
+            
 
-            <StatCard
-              title="En cours"
-              value={stats.enCours}
-              color="#e8be59"
-              active={statusFilter === "EN_COURS"}
-              hovered={hoveredStat === "EN_COURS"}
-              onMouseEnter={() => setHoveredStat("EN_COURS")}
-              onMouseLeave={() => setHoveredStat(null)}
-              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
-            />
+           <StatCard
+  title="Total Réclamations"
+  value={stats.total}
+  color="#7aa9ff"
+  active={statusFilter === "Tous"}
+  onClick={() => runWithLoader(() => setStatusFilter("Tous"))}
+/>
 
-            <StatCard
-              title="Traitées"
-              value={stats.traitees}
-              color="#65b36f"
-              active={statusFilter === "TRAITEE"}
-              hovered={hoveredStat === "TRAITEE"}
-              onMouseEnter={() => setHoveredStat("TRAITEE")}
-              onMouseLeave={() => setHoveredStat(null)}
-              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
-            />
+<StatCard
+  title="En cours"
+  value={stats.enCours}
+  color="#e8be59"
+  active={statusFilter === "EN_COURS"}
+  onClick={() => runWithLoader(() => setStatusFilter("EN_COURS"))}
+/>
 
-            <StatCard
-              title="En attente"
-              value={stats.enAttente}
-              color="#e97667"
-              active={statusFilter === "EN_ATTENTE"}
-              hovered={hoveredStat === "EN_ATTENTE"}
-              onMouseEnter={() => setHoveredStat("EN_ATTENTE")}
-              onMouseLeave={() => setHoveredStat(null)}
-              onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
-            />
+<StatCard
+  title="Traitées"
+  value={stats.traitees}
+  color="#65b36f"
+  active={statusFilter === "TRAITEE"}
+  onClick={() => runWithLoader(() => setStatusFilter("TRAITEE"))}
+/>
+
+<StatCard
+  title="En attente"
+  value={stats.enAttente}
+  color="#e97667"
+  active={statusFilter === "EN_ATTENTE"}
+  onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
+/>
           </div>
 
           <div style={styles.chartsGrid}>
