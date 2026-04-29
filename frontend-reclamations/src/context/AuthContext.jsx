@@ -11,9 +11,16 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const savedUser = localStorage.getItem("current_user");
+
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        localStorage.removeItem("current_user");
+        setUser(null);
+      }
     }
+
     setLoadingAuth(false);
   }, []);
 

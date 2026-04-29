@@ -79,9 +79,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        'NAME': 'mae_reclamations_new',
+        'NAME': 'mae',
         "USER": "postgres",
-        "PASSWORD": "1234",
+        "PASSWORD": "ranim123",
         "HOST": "localhost",
         "PORT": "5432",
     }
@@ -124,3 +124,4 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

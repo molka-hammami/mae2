@@ -3,7 +3,11 @@ import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, loadingAuth } = useContext(AuthContext);
+
+  if (loadingAuth) {
+    return <p>Chargement...</p>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

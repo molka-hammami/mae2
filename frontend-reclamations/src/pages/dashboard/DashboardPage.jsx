@@ -290,7 +290,8 @@ function DashboardPage() {
     {!loading && !error && (
       <>
         <div style={styles.filtersBar}>
-          <div style={styles.filtersLeft}>
+          <div style={styles.filtersAll}>
+
             <CompactFilter
               label="Canal"
               value={channelFilter}
@@ -298,54 +299,50 @@ function DashboardPage() {
               options={channelOptions}
             />
 
-              <CompactFilter
-                label="Catégorie"
-                value={categoryFilter}
-                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
-                options={categoryOptions}
-              />
+            <CompactFilter
+              label="Catégorie"
+              value={categoryFilter}
+              onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
+              options={categoryOptions}
+            />
 
-              <CompactFilter
-                label="Statut"
-                value={statusFilter}
-                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
-                options={statusOptions}
-              />
+            <CompactFilter
+              label="Statut"
+              value={statusFilter}
+              onChange={(value) => runWithLoader(() => setStatusFilter(value))}
+              options={statusOptions}
+            />
 
-              <CompactFilter
-                label="Période"
-                value={periodFilter}
-                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
-                options={periodOptions}
+            <CompactFilter
+              label="Période"
+              value={periodFilter}
+              onChange={(value) => runWithLoader(() => setPeriodFilter(value))}
+              options={periodOptions}
+            />
+
+            {/* 🔍 Recherche */}
+            <div style={styles.searchWrap}>
+              <span style={styles.searchIcon}>⌕</span>
+              <input
+                type="text"
+                placeholder="Rechercher une réclamation..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={styles.searchInputPro}
               />
             </div>
 
-            <div style={styles.filtersRight}>
-              <div style={styles.searchWrap}>
-                <span style={styles.searchIcon}>⌕</span>
-                <input
-                  type="text"
-                  placeholder="Rechercher une réclamation..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={styles.searchInputPro}
-                />
-              </div>
+            {/* 🔁 Bouton */}
+            <button
+              style={styles.resetButtonPro}
+              onClick={resetFilters}
+            >
+              <span style={styles.resetIcon}>↻</span>
+              Réinitialiser
+            </button>
 
-              <button
-                style={{
-                  ...styles.resetButtonPro,
-                  ...(hoveredReset ? styles.resetButtonProHover : {}),
-                }}
-                onMouseEnter={() => setHoveredReset(true)}
-                onMouseLeave={() => setHoveredReset(false)}
-                onClick={resetFilters}
-              >
-                <span style={styles.resetIcon}>↻</span>
-                Réinitialiser
-              </button>
-            </div>
           </div>
+        </div>
 
           <div style={styles.statsGrid}>
             
@@ -778,6 +775,13 @@ const styles = {
     gap: "16px",
     flexWrap: "wrap",
   },
+  filtersAll: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: "12px",
+    flexWrap: "wrap",
+    width: "100%",
+  },
 
   filtersLeft: {
     display: "flex",
@@ -826,7 +830,8 @@ const styles = {
     alignItems: "center",
     gap: "10px",
     height: "42px",
-    minWidth: "300px",
+    flex: 1,      
+    minWidth: "250px",
     borderRadius: "14px",
     border: "1px solid #e2e8f0",
     background: "#f8fafc",
