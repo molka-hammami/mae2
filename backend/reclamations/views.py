@@ -8,42 +8,15 @@ from rest_framework import status
 from .models import ReclamationCase, ReclamationActionLog
 from .serializers import ReclamationSerializer
 
-@api_view(["PATCH"])
-def classify_reclamation(request, pk):
-    reclamation = get_object_or_404(ReclamationCase, pk=pk)
 
-    category = request.data.get("category")
-    actor_name = request.data.get("actor_name", "Admin")
-    actor_role = request.data.get("actor_role", "ADMIN")
-
-    if not category:
-        return Response(
-            {"error": "La catégorie est obligatoire."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    annotation = reclamation.comment.annotation
-    annotation.category = category
-    annotation.category_assigned_by_admin = True
-    annotation.category_assigned_at = timezone.now()
-    annotation.save()
-
-    ReclamationActionLog.objects.create(
-        case=reclamation,
-        actor_name=actor_name,
-        actor_role=actor_role,
-        action="CLASSIFICATION_VALIDEE",
-        details=f"Catégorie validée : {category}",
-    )
-
-    serializer = ReclamationSerializer(reclamation)
-    return Response(serializer.data, status=status.HTTP_200_OK)
 @api_view(["GET"])
 def reclamation_list(request):
     role = request.GET.get("role", "")
     assigned_category = request.GET.get("assigned_category", "")
 
-    reclamations = ReclamationCase.objects.all().order_by("-id")
+    reclamations = ReclamationCase.objects.filter(
+        comment__annotation__is_reclamation="reclamation"
+    ).order_by("-id")
 
     if role == "AGENT" and assigned_category:
         reclamations = reclamations.filter(
@@ -56,7 +29,11 @@ def reclamation_list(request):
 
 @api_view(["GET"])
 def reclamation_detail(request, pk):
-    reclamation = get_object_or_404(ReclamationCase, pk=pk)
+    reclamation = get_object_or_404(
+        ReclamationCase,
+        pk=pk,
+        comment__annotation__is_reclamation="reclamation",
+    )
 
     role = request.GET.get("role", "")
     actor_name = request.GET.get("actor_name", "")
@@ -98,8 +75,48 @@ def reclamation_detail(request, pk):
 
 
 @api_view(["PATCH"])
+def classify_reclamation(request, pk):
+    reclamation = get_object_or_404(
+        ReclamationCase,
+        pk=pk,
+        comment__annotation__is_reclamation="reclamation",
+    )
+
+    category = request.data.get("category")
+    actor_name = request.data.get("actor_name", "Admin")
+    actor_role = request.data.get("actor_role", "ADMIN")
+
+    if not category:
+        return Response(
+            {"error": "La catégorie est obligatoire."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    annotation = reclamation.comment.annotation
+    annotation.category = category
+    annotation.category_assigned_by_admin = True
+    annotation.category_assigned_at = timezone.now()
+    annotation.save()
+
+    ReclamationActionLog.objects.create(
+        case=reclamation,
+        actor_name=actor_name,
+        actor_role=actor_role,
+        action="CLASSIFICATION_VALIDEE",
+        details=f"Catégorie validée : {category}",
+    )
+
+    serializer = ReclamationSerializer(reclamation)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["PATCH"])
 def mark_as_processed(request, pk):
-    reclamation = get_object_or_404(ReclamationCase, pk=pk)
+    reclamation = get_object_or_404(
+        ReclamationCase,
+        pk=pk,
+        comment__annotation__is_reclamation="reclamation",
+    )
 
     actor_name = request.data.get("actor_name", "")
     actor_role = request.data.get("actor_role", "")
@@ -124,7 +141,11 @@ def mark_as_processed(request, pk):
 
 @api_view(["PATCH"])
 def update_admin_note(request, pk):
-    reclamation = get_object_or_404(ReclamationCase, pk=pk)
+    reclamation = get_object_or_404(
+        ReclamationCase,
+        pk=pk,
+        comment__annotation__is_reclamation="reclamation",
+    )
 
     annotation = getattr(reclamation.comment, "annotation", None)
     if not annotation:
@@ -155,7 +176,11 @@ def update_admin_note(request, pk):
 
 @api_view(["PATCH"])
 def update_internal_note(request, pk):
-    reclamation = get_object_or_404(ReclamationCase, pk=pk)
+    reclamation = get_object_or_404(
+        ReclamationCase,
+        pk=pk,
+        comment__annotation__is_reclamation="reclamation",
+    )
 
     internal_note = request.data.get("internal_note", "")
     actor_name = request.data.get("actor_name", "Agent")

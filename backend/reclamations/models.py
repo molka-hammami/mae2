@@ -9,6 +9,10 @@ class Comment(models.Model):
     text_original = models.TextField(null=True, blank=True)
     clean_text = models.TextField(null=True, blank=True)
 
+    # ✅ AJOUTE ÇA
+    author_name = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         db_table = "comments"
         managed = False
@@ -22,6 +26,7 @@ class Annotation(models.Model):
         db_column="comment_id",
         related_name="annotation",
     )
+
     is_reclamation = models.CharField(max_length=50, null=True, blank=True)
     category = models.CharField(max_length=255, null=True, blank=True)
     urgency = models.CharField(max_length=50, null=True, blank=True)
@@ -39,13 +44,21 @@ class Annotation(models.Model):
 
 class ReclamationCase(models.Model):
     id = models.AutoField(primary_key=True)
+
     comment = models.OneToOneField(
-        Comment,
-        on_delete=models.DO_NOTHING,
-        db_column="comment_id",
-        related_name="case",
+    Comment,
+    on_delete=models.DO_NOTHING,
+    db_column="comment_id",
+    related_name="case",
+    null=True,
+    blank=True,
+)
+
+    status = models.CharField(
+        max_length=20,
+        default="EN_ATTENTE",
     )
-    status = models.CharField(max_length=20)
+
     assigned_agent = models.CharField(max_length=100, null=True, blank=True)
     opened_at = models.DateTimeField(null=True, blank=True)
     processed_at = models.DateTimeField(null=True, blank=True)
@@ -53,7 +66,7 @@ class ReclamationCase(models.Model):
 
     class Meta:
         db_table = "reclamation_cases"
-        managed = False
+        managed = True
 
 
 class ReclamationActionLog(models.Model):
@@ -62,6 +75,7 @@ class ReclamationActionLog(models.Model):
         on_delete=models.CASCADE,
         related_name="action_logs",
     )
+
     actor_name = models.CharField(max_length=150, null=True, blank=True)
     actor_role = models.CharField(max_length=50, null=True, blank=True)
     action = models.CharField(max_length=100)
