@@ -29,7 +29,6 @@ function UsersPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-
   const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
@@ -59,6 +58,14 @@ function UsersPage() {
     }
   }
 
+  const getEmailNameOnly = (email) => {
+    return (email || "").replace("@mae.tn", "").trim().toLowerCase();
+  };
+
+  const buildMaeEmail = (emailName) => {
+    return `${emailName.trim().toLowerCase()}@mae.tn`;
+  };
+
   const openCreateModal = () => {
     setEditingUser(null);
     setFormData(initialForm);
@@ -71,7 +78,7 @@ function UsersPage() {
     setEditingUser(user);
     setFormData({
       name: user.name || "",
-      email: user.email || "",
+      email: getEmailNameOnly(user.email),
       password: "",
       role: user.role || "AGENT",
       assigned_category: user.assigned_category || "",
@@ -92,6 +99,20 @@ function UsersPage() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
+    if (name === "email") {
+      let cleanValue = value
+        .toLowerCase()
+        .replace("@mae.tn", "")
+        .replace(/@.*/g, "")
+        .replace(/\s/g, "");
+
+      setFormData((prev) => ({
+        ...prev,
+        email: cleanValue,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -107,14 +128,15 @@ function UsersPage() {
       return "L'email est obligatoire.";
     }
 
+    if (formData.email.includes("@")) {
+      return "Écrivez seulement le nom avant @mae.tn.";
+    }
+
     if (!editingUser && !formData.password.trim()) {
       return "Le mot de passe temporaire est obligatoire.";
     }
 
-    if (
-      formData.role === "AGENT" &&
-      !formData.assigned_category.trim()
-    ) {
+    if (formData.role === "AGENT" && !formData.assigned_category.trim()) {
       return "La catégorie assignée est obligatoire pour un agent.";
     }
 
@@ -137,7 +159,7 @@ function UsersPage() {
 
       const payload = {
         name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
+        email: buildMaeEmail(formData.email),
         role: formData.role,
         assigned_category:
           formData.role === "AGENT" ? formData.assigned_category : null,
@@ -254,6 +276,7 @@ function UsersPage() {
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {sortedUsers.map((user) => (
                 <tr key={user.id}>
@@ -271,9 +294,7 @@ function UsersPage() {
                       {user.role}
                     </span>
                   </td>
-                  <td style={styles.td}>
-                    {user.assigned_category || "-"}
-                  </td>
+                  <td style={styles.td}>{user.assigned_category || "-"}</td>
                   <td style={styles.td}>
                     <span
                       style={
@@ -304,6 +325,7 @@ function UsersPage() {
                       >
                         Modifier
                       </button>
+
                       {user.role !== "ADMIN" && (
                         <button
                           style={styles.deleteButton}
@@ -328,6 +350,7 @@ function UsersPage() {
               <h2 style={styles.modalTitle}>
                 {editingUser ? "Modifier l'utilisateur" : "Créer un agent"}
               </h2>
+
               <button style={styles.closeButton} onClick={closeModal}>
                 ✕
               </button>
@@ -348,14 +371,18 @@ function UsersPage() {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="agent@mae.tn"
-                />
+
+                <div style={styles.emailWrapper}>
+                  <input
+                    type="text"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    style={styles.emailInput}
+                    placeholder="ex: ranim"
+                  />
+                  <span style={styles.emailSuffix}>@mae.tn</span>
+                </div>
               </div>
 
               <div style={styles.formGroup}>
@@ -454,6 +481,7 @@ const styles = {
     flexDirection: "column",
     gap: "20px",
   },
+
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -461,17 +489,20 @@ const styles = {
     gap: "16px",
     flexWrap: "wrap",
   },
+
   title: {
     margin: 0,
     fontSize: "30px",
     color: "#1e293b",
     fontWeight: "700",
   },
+
   subtitle: {
     margin: "8px 0 0 0",
     color: "#64748b",
     fontSize: "15px",
   },
+
   card: {
     background: "#ffffff",
     borderRadius: "22px",
@@ -479,11 +510,13 @@ const styles = {
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
     overflowX: "auto",
   },
+
   table: {
     width: "100%",
     borderCollapse: "collapse",
     minWidth: "1000px",
   },
+
   th: {
     textAlign: "left",
     padding: "14px 12px",
@@ -492,12 +525,14 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700",
   },
+
   td: {
     padding: "16px 12px",
     borderBottom: "1px solid #eef2f7",
     color: "#1e293b",
     fontSize: "14px",
   },
+
   tdStrong: {
     padding: "16px 12px",
     borderBottom: "1px solid #eef2f7",
@@ -505,11 +540,13 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700",
   },
+
   actions: {
     display: "flex",
     gap: "8px",
     flexWrap: "wrap",
   },
+
   roleAdminBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -519,6 +556,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   roleAgentBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -528,6 +566,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   activeBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -537,6 +576,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   inactiveBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -546,6 +586,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   mustChangeBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -555,6 +596,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   doneBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -564,6 +606,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   editButton: {
     border: "none",
     borderRadius: "10px",
@@ -573,6 +616,7 @@ const styles = {
     padding: "9px 12px",
     cursor: "pointer",
   },
+
   deleteButton: {
     border: "none",
     borderRadius: "10px",
@@ -582,6 +626,7 @@ const styles = {
     padding: "9px 12px",
     cursor: "pointer",
   },
+
   primaryButton: {
     border: "none",
     borderRadius: "12px",
@@ -591,6 +636,7 @@ const styles = {
     padding: "12px 18px",
     cursor: "pointer",
   },
+
   secondaryButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "12px",
@@ -600,6 +646,7 @@ const styles = {
     padding: "12px 18px",
     cursor: "pointer",
   },
+
   overlay: {
     position: "fixed",
     inset: 0,
@@ -610,6 +657,7 @@ const styles = {
     padding: "20px",
     zIndex: 1000,
   },
+
   modal: {
     width: "100%",
     maxWidth: "640px",
@@ -618,6 +666,7 @@ const styles = {
     boxShadow: "0 20px 45px rgba(15, 23, 42, 0.18)",
     padding: "24px",
   },
+
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -625,11 +674,13 @@ const styles = {
     gap: "12px",
     marginBottom: "18px",
   },
+
   modalTitle: {
     margin: 0,
     fontSize: "22px",
     color: "#1e293b",
   },
+
   closeButton: {
     border: "none",
     background: "transparent",
@@ -637,26 +688,31 @@ const styles = {
     cursor: "pointer",
     color: "#64748b",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "16px",
   },
+
   row: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "14px",
   },
+
   formGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
   },
+
   label: {
     fontSize: "14px",
     fontWeight: "700",
     color: "#334155",
   },
+
   input: {
     height: "46px",
     borderRadius: "12px",
@@ -666,6 +722,37 @@ const styles = {
     outline: "none",
     background: "#ffffff",
   },
+
+  emailWrapper: {
+    height: "46px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    display: "flex",
+    alignItems: "center",
+    overflow: "hidden",
+    background: "#ffffff",
+  },
+
+  emailInput: {
+    flex: 1,
+    height: "100%",
+    border: "none",
+    outline: "none",
+    padding: "0 14px",
+    fontSize: "14px",
+  },
+
+  emailSuffix: {
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    padding: "0 14px",
+    background: "#f1f5f9",
+    borderLeft: "1px solid #cbd5e1",
+    color: "#166534",
+    fontWeight: "700",
+  },
+
   checkboxRow: {
     display: "flex",
     alignItems: "center",
@@ -673,12 +760,14 @@ const styles = {
     color: "#334155",
     fontWeight: "600",
   },
+
   modalActions: {
     display: "flex",
     justifyContent: "flex-end",
     gap: "10px",
     marginTop: "6px",
   },
+
   errorBox: {
     background: "#fef2f2",
     color: "#dc2626",
@@ -687,6 +776,7 @@ const styles = {
     padding: "12px 14px",
     fontWeight: "600",
   },
+
   successBox: {
     background: "#f0fdf4",
     color: "#15803d",
@@ -695,6 +785,7 @@ const styles = {
     padding: "12px 14px",
     fontWeight: "600",
   },
+
   message: {
     margin: 0,
     color: "#64748b",
