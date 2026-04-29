@@ -7,7 +7,14 @@ from rest_framework import status
 
 from .models import ReclamationCase, ReclamationActionLog
 from .serializers import ReclamationSerializer
+from django.db.models import Count
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Annotation
 
+@api_view(["GET"])
+def reclamation_stats(request):
+    return Response({"message": "Stats OK"})
 
 @api_view(["GET"])
 def reclamation_list(request):

@@ -251,7 +251,33 @@ function DashboardPage() {
         color: categoryColors[label],
       }));
   }, [complaints]);
+const reclamationTypeStats = useMemo(() => {
+  const counts = {
+    reclamation: 0,
+    non_reclamation: 0,
+  };
 
+  complaints.forEach((item) => {
+    if (item.is_reclamation === "non_reclamation") {
+      counts.non_reclamation += 1;
+    } else {
+      counts.reclamation += 1;
+    }
+  });
+
+  return [
+    {
+      label: "Réclamations",
+      value: counts.reclamation,
+      color: "#166534",
+    },
+    {
+      label: "Non Réclamations",
+      value: counts.non_reclamation,
+      color: "#e97667",
+    },
+  ];
+}, [complaints]);
   const channelStats = useMemo(() => {
     const counts = {};
 
@@ -279,7 +305,38 @@ function DashboardPage() {
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   };
+const renderCategoryLabel = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  percent,
+  label,
+}) => {
+  if (percent < 0.02) return null;
 
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 28;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#166534"
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      style={{
+        fontSize: "12px",
+        fontWeight: "700",
+        pointerEvents: "none",
+      }}
+    >
+      {`${label} ${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
  return (
   <div style={styles.page}>
     {pageLoading && <PageLoader />}
@@ -306,18 +363,18 @@ function DashboardPage() {
               />
 
               <CompactFilter
-                label="Statut"
-                value={statusFilter}
-                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
-                options={statusOptions}
-              />
+  label="Statut"
+  value={statusFilter}
+  onChange={(value) => runWithLoader(() => setStatusFilter(value))}
+  options={statusOptions}
+/>
 
-              <CompactFilter
-                label="Période"
-                value={periodFilter}
-                onChange={(value) => runWithLoader(() => setCategoryFilter(value))}
-                options={periodOptions}
-              />
+<CompactFilter
+  label="Période"
+  value={periodFilter}
+  onChange={(value) => runWithLoader(() => setPeriodFilter(value))}
+  options={periodOptions}
+/>
             </div>
 
             <div style={styles.filtersRight}>
@@ -391,60 +448,101 @@ function DashboardPage() {
                 {categoryFilter !== "Toutes" && (
                   <button
                     style={styles.clearChartFilter}
-                    onClick={() => runWithLoader(() => setStatusFilter("EN_ATTENTE"))}
+                    onClick={() => runWithLoader(() => setCategoryFilter("Toutes"))}
                   >
                     Toutes
                   </button>
                 )}
               </div>
 
-              <div style={styles.pieChartBox}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={categoryStats}
-                      dataKey="value"
-                      nameKey="label"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={95}
-                      label={({ label, percent }) =>
-                        `${label} ${(percent * 100).toFixed(0)}%`
-                      }
-                      onClick={(data) =>
-                        setCategoryFilter(
-                          categoryFilter === data.label
-                            ? "Toutes"
-                            : data.label
-                        )
-                      }
-                    >
-                      {categoryStats.map((entry) => (
-                        <Cell
-                          key={entry.label}
-                          fill={entry.color}
-                          opacity={
-                            categoryFilter === "Toutes" ||
-                            categoryFilter === entry.label
-                              ? 1
-                              : 0.35
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
-                      ))}
-                    </Pie>
+              {categoryStats.length > 0 ? (
+                <div style={styles.pieChartBox}>
+                  <ResponsiveContainer width="100%" height={360}>
+                    <PieChart margin={{ top: 30, right: 90, bottom: 50, left: 90 }}>
+                      <Pie
+                        data={categoryStats}
+                        dataKey="value"
+                        nameKey="label"
+                        cx="50%"
+                        cy="46%"
+                        outerRadius={95}
+                        labelLine={true}
+                        label={renderCategoryLabel}
+                        isAnimationActive={false}
+                      >
+                        {categoryStats.map((entry) => (
+                          <Cell key={entry.label} fill={entry.color} />
+                        ))}
+                      </Pie>
 
-                    <Tooltip
-                      formatter={(value, name) => [
-                        `${value} réclamation(s)`,
-                        name,
-                      ]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+                      <Tooltip
+                        formatter={(value, name) => [`${value} element(s)`, name]}
+                      />
+
+                      <Legend verticalAlign="bottom" height={42} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p style={styles.emptyText}>Aucune donnee categorie.</p>
+              )}
             </div>
+
+<div style={styles.chartCard}>
+  <div style={styles.chartTitleRow}>
+    <h3 style={styles.cardTitle}>Réclamations vs Non Réclamations</h3>
+  </div>
+
+  <div style={styles.pieChartBox}>
+    <ResponsiveContainer width="100%" height={360}>
+      <PieChart margin={{ top: 30, right: 90, bottom: 50, left: 90 }}>
+        <Pie
+          data={reclamationTypeStats}
+          dataKey="value"
+          nameKey="label"
+          cx="50%"
+          cy="46%"
+          outerRadius={95}
+          labelLine={true}
+          label={({ cx, cy, midAngle, outerRadius, percent, label, fill }) => {
+            const RADIAN = Math.PI / 180;
+            const radius = outerRadius + 30;
+            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+            return (
+              <text
+                x={x}
+                y={y}
+                fill={fill}
+                textAnchor={x > cx ? "start" : "end"}
+                dominantBaseline="central"
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  pointerEvents: "none",
+                }}
+              >
+                {`${label} ${(percent * 100).toFixed(0)}%`}
+              </text>
+            );
+          }}
+          isAnimationActive={false}
+        >
+          {reclamationTypeStats.map((entry) => (
+            <Cell key={entry.label} fill={entry.color} />
+          ))}
+        </Pie>
+
+        <Tooltip
+          formatter={(value, name) => [`${value} élément(s)`, name]}
+        />
+
+        <Legend verticalAlign="bottom" height={42} />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+</div>
 
             <div style={styles.chartCard}>
               <div style={styles.chartTitleRow}>
@@ -557,9 +655,9 @@ function DashboardPage() {
             <ComplaintTable data={paginatedComplaints} />
           </div>
         </>
-      )}
-    </div>
-  );
+)}
+  </div>
+);
 }
 
 function CompactFilter({ label, value, onChange, options }) {
@@ -957,13 +1055,13 @@ const styles = {
   },
 
   chartCard: {
-    background: "#ffffff",
-    borderRadius: "24px",
-    padding: "24px",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
-    minHeight: "310px",
-    overflow: "visible",
-  },
+  background: "#ffffff",
+  borderRadius: "24px",
+  padding: "24px",
+  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+  minHeight: "420px",
+  overflow: "visible",
+},
 
   chartTitleRow: {
     display: "flex",
@@ -979,9 +1077,10 @@ const styles = {
   },
 
   pieChartBox: {
-    width: "100%",
-    height: "300px",
-  },
+  width: "100%",
+  height: "380px",
+  overflow: "visible",
+},
 
   clearChartFilter: {
     border: "1px solid #bfdbfe",
