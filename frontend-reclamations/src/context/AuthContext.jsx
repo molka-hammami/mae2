@@ -17,6 +17,8 @@ export function AuthProvider({ children }) {
         setUser(JSON.parse(savedUser));
       } catch (error) {
         localStorage.removeItem("current_user");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         setUser(null);
       }
     }
@@ -28,7 +30,8 @@ export function AuthProvider({ children }) {
     id: apiUser.id,
     name: apiUser.name,
     email: apiUser.email,
-    role: apiUser.role,
+    personalEmail: apiUser.personal_email || "",
+    role: apiUser.role?.trim().toUpperCase(),
     mustChangePassword: apiUser.must_change_password,
     assignedCategory: apiUser.assigned_category || null,
     isActive: apiUser.is_active,
@@ -39,6 +42,15 @@ export function AuthProvider({ children }) {
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
     return strongPasswordRegex.test(password);
+  };
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("access_token");
+
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
   };
 
   const login = async ({ email, password }) => {
@@ -63,15 +75,28 @@ export function AuthProvider({ children }) {
       throw new Error(data?.error || "Email ou mot de passe incorrect.");
     }
 
-    const loggedUser = normalizeUser(data);
+    const apiUser = data.user || data;
+    const loggedUser = normalizeUser(apiUser);
 
     setUser(loggedUser);
     localStorage.setItem("current_user", JSON.stringify(loggedUser));
+
+    if (data.access) {
+      localStorage.setItem("access_token", data.access);
+    }
+
+    if (data.refresh) {
+      localStorage.setItem("refresh_token", data.refresh);
+    }
+
+    return loggedUser;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("current_user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
   };
 
   const changePassword = async ({
@@ -107,9 +132,7 @@ export function AuthProvider({ children }) {
 
     const response = await fetch(`${API_BASE}/change-password/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         user_id: user.id,
         currentPassword: currentPassword.trim(),
@@ -130,10 +153,15 @@ export function AuthProvider({ children }) {
 
     setUser(updatedCurrentUser);
     localStorage.setItem("current_user", JSON.stringify(updatedCurrentUser));
+
+    return updatedCurrentUser;
   };
 
   const fetchUsers = async () => {
-    const response = await fetch(`${API_BASE}/users/`);
+    const response = await fetch(`${API_BASE}/users/`, {
+      headers: getAuthHeaders(),
+    });
+
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
@@ -157,14 +185,17 @@ export function AuthProvider({ children }) {
       throw new Error("Nom, email et mot de passe sont obligatoires.");
     }
 
+    const personalEmail = email.trim().toLowerCase();
+    const username = personalEmail.split("@")[0];
+    const generatedLogin = `${username}@mae.tn`;
+
     const response = await fetch(`${API_BASE}/users/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: generatedLogin,
+        personal_email: personalEmail,
         password: password.trim(),
         role,
         assigned_category: role === "AGENT" ? assignedCategory : null,
@@ -178,6 +209,7 @@ export function AuthProvider({ children }) {
       throw new Error(
         data?.error ||
           data?.email?.[0] ||
+          data?.personal_email?.[0] ||
           data?.name?.[0] ||
           "Erreur lors de la création de l'utilisateur."
       );
@@ -189,12 +221,15 @@ export function AuthProvider({ children }) {
   };
 
   const updateUser = async (userId, updatedData) => {
-    const payload = {
-      ...updatedData,
-    };
+    const payload = { ...updatedData };
 
     if ("email" in payload && payload.email) {
       payload.email = payload.email.trim().toLowerCase();
+    }
+
+    if ("personalEmail" in payload) {
+      payload.personal_email = payload.personalEmail;
+      delete payload.personalEmail;
     }
 
     if ("name" in payload && payload.name) {
@@ -213,9 +248,7 @@ export function AuthProvider({ children }) {
 
     const response = await fetch(`${API_BASE}/users/${userId}/`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -225,6 +258,7 @@ export function AuthProvider({ children }) {
       throw new Error(
         data?.error ||
           data?.email?.[0] ||
+          data?.personal_email?.[0] ||
           data?.name?.[0] ||
           "Erreur lors de la modification de l'utilisateur."
       );
@@ -247,6 +281,7 @@ export function AuthProvider({ children }) {
   const deleteUser = async (userId) => {
     const response = await fetch(`${API_BASE}/users/${userId}/`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok && response.status !== 204) {
@@ -256,6 +291,7 @@ export function AuthProvider({ children }) {
       } catch (_) {
         data = null;
       }
+
       throw new Error(data?.error || "Erreur lors de la suppression.");
     }
 

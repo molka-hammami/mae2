@@ -15,17 +15,28 @@ class AppUser(models.Model):
     ]
 
     name = models.CharField(max_length=150)
+
+    # Login automatique généré : exemple ranim@mae.tn
     email = models.EmailField(unique=True)
+
+    # Email réel/personnel : exemple ranim@gmail.com
+    personal_email = models.EmailField(null=True, blank=True)
+
     password = models.CharField(max_length=255)
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="AGENT")
+
     must_change_password = models.BooleanField(default=True)
+
     assigned_category = models.CharField(
         max_length=100,
         choices=CATEGORY_CHOICES,
         null=True,
         blank=True,
     )
+
     is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

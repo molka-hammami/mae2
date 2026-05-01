@@ -8,7 +8,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "email",
+            "email",              # login @mae.tn
+            "personal_email",     # ✅ ajouté
             "role",
             "must_change_password",
             "assigned_category",
@@ -24,6 +25,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "email",
+            "personal_email",   # ✅ ADD THIS
             "password",
             "role",
             "must_change_password",
@@ -33,3 +35,15 @@ class CreateUserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {"write_only": True},
         }
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+
+        user = AppUser(**validated_data)
+
+        # ⚠️ IMPORTANT (hash password)
+        from django.contrib.auth.hashers import make_password
+        user.password = make_password(password)
+
+        user.save()
+        return user

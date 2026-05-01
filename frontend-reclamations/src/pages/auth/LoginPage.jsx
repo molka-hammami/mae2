@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
 function LoginPage() {
@@ -24,17 +24,15 @@ function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
+    if (!formData.email.trim() || !formData.password.trim()) {
       setError("Veuillez remplir tous les champs.");
       return;
     }
 
     try {
-      await login(formData);
+      const loggedUser = await login(formData);
 
-      const user = JSON.parse(localStorage.getItem("current_user"));
-
-      if (user?.mustChangePassword) {
+      if (loggedUser?.mustChangePassword) {
         navigate("/change-password");
       } else {
         navigate("/dashboard");
@@ -48,6 +46,7 @@ function LoginPage() {
     <div style={styles.page}>
       <div style={styles.card}>
         <h1 style={styles.title}>MAE Assurances</h1>
+
         <p style={styles.subtitle}>
           Connexion à la plateforme de gestion des réclamations
         </p>
@@ -78,7 +77,9 @@ function LoginPage() {
           </button>
         </form>
 
-        
+        <Link to="/forgot-password" style={styles.forgotLink}>
+          Mot de passe oublié ?
+        </Link>
       </div>
     </div>
   );
@@ -92,6 +93,7 @@ const styles = {
     alignItems: "center",
     background: "#f1f5f9",
   },
+
   card: {
     width: "100%",
     maxWidth: "420px",
@@ -100,27 +102,32 @@ const styles = {
     borderRadius: "16px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
   },
+
   title: {
     textAlign: "center",
     marginBottom: "8px",
     color: "#166534",
   },
+
   subtitle: {
     textAlign: "center",
     marginBottom: "20px",
     color: "#64748b",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "14px",
   },
+
   input: {
     padding: "12px",
     borderRadius: "8px",
     border: "1px solid #cbd5e1",
     outline: "none",
   },
+
   button: {
     padding: "12px",
     borderRadius: "8px",
@@ -130,18 +137,21 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
   },
+
+  forgotLink: {
+    display: "block",
+    textAlign: "center",
+    marginTop: "16px",
+    color: "#166534",
+    textDecoration: "none",
+    fontWeight: "700",
+    fontSize: "14px",
+  },
+
   error: {
     color: "#dc2626",
     fontSize: "14px",
     marginBottom: "12px",
-  },
-  infoBox: {
-    marginTop: "18px",
-    fontSize: "14px",
-    color: "#475569",
-    background: "#f8fafc",
-    padding: "12px",
-    borderRadius: "8px",
   },
 };
 

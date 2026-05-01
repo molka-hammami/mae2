@@ -13,11 +13,16 @@ const ROLE_OPTIONS = ["AGENT", "ADMIN"];
 
 const initialForm = {
   name: "",
-  email: "",
+  email: "", // email personnel
   password: "",
   role: "AGENT",
   assigned_category: "",
   is_active: true,
+};
+
+const buildMaeLoginFromPersonalEmail = (personalEmail) => {
+  const username = personalEmail.trim().toLowerCase().split("@")[0];
+  return `${username}@mae.tn`;
 };
 
 function UsersPage() {
@@ -29,7 +34,6 @@ function UsersPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-
   const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
@@ -46,6 +50,7 @@ function UsersPage() {
       setError("");
 
       const response = await fetch(`${API_BASE}/users/`);
+
       if (!response.ok) {
         throw new Error("Erreur lors du chargement des utilisateurs.");
       }
@@ -71,7 +76,7 @@ function UsersPage() {
     setEditingUser(user);
     setFormData({
       name: user.name || "",
-      email: user.email || "",
+      email: user.personal_email || "",
       password: "",
       role: user.role || "AGENT",
       assigned_category: user.assigned_category || "",
@@ -104,17 +109,18 @@ function UsersPage() {
     }
 
     if (!formData.email.trim()) {
-      return "L'email est obligatoire.";
+      return "L'email personnel est obligatoire.";
+    }
+
+    if (!formData.email.includes("@")) {
+      return "Veuillez écrire un email personnel valide, exemple : agent@gmail.com.";
     }
 
     if (!editingUser && !formData.password.trim()) {
       return "Le mot de passe temporaire est obligatoire.";
     }
 
-    if (
-      formData.role === "AGENT" &&
-      !formData.assigned_category.trim()
-    ) {
+    if (formData.role === "AGENT" && !formData.assigned_category.trim()) {
       return "La catégorie assignée est obligatoire pour un agent.";
     }
 
@@ -127,6 +133,7 @@ function UsersPage() {
     setSuccess("");
 
     const validationError = validateForm();
+
     if (validationError) {
       setError(validationError);
       return;
@@ -135,9 +142,12 @@ function UsersPage() {
     try {
       setSaving(true);
 
+      const personalEmail = formData.email.trim().toLowerCase();
+
       const payload = {
         name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
+        email: buildMaeLoginFromPersonalEmail(personalEmail),
+        personal_email: personalEmail,
         role: formData.role,
         assigned_category:
           formData.role === "AGENT" ? formData.assigned_category : null,
@@ -246,7 +256,8 @@ function UsersPage() {
               <tr>
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>Nom</th>
-                <th style={styles.th}>Email</th>
+                <th style={styles.th}>Login</th>
+                <th style={styles.th}>Email personnel</th>
                 <th style={styles.th}>Rôle</th>
                 <th style={styles.th}>Catégorie</th>
                 <th style={styles.th}>Statut</th>
@@ -254,12 +265,14 @@ function UsersPage() {
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {sortedUsers.map((user) => (
                 <tr key={user.id}>
                   <td style={styles.td}>#{user.id}</td>
                   <td style={styles.tdStrong}>{user.name}</td>
                   <td style={styles.td}>{user.email}</td>
+                  <td style={styles.td}>{user.personal_email || "-"}</td>
                   <td style={styles.td}>
                     <span
                       style={
@@ -271,9 +284,7 @@ function UsersPage() {
                       {user.role}
                     </span>
                   </td>
-                  <td style={styles.td}>
-                    {user.assigned_category || "-"}
-                  </td>
+                  <td style={styles.td}>{user.assigned_category || "-"}</td>
                   <td style={styles.td}>
                     <span
                       style={
@@ -304,6 +315,7 @@ function UsersPage() {
                       >
                         Modifier
                       </button>
+
                       {user.role !== "ADMIN" && (
                         <button
                           style={styles.deleteButton}
@@ -328,6 +340,7 @@ function UsersPage() {
               <h2 style={styles.modalTitle}>
                 {editingUser ? "Modifier l'utilisateur" : "Créer un agent"}
               </h2>
+
               <button style={styles.closeButton} onClick={closeModal}>
                 ✕
               </button>
@@ -347,15 +360,22 @@ function UsersPage() {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Email</label>
+                <label style={styles.label}>Email personnel</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   style={styles.input}
-                  placeholder="agent@mae.tn"
+                  placeholder="ex: agent@gmail.com"
                 />
+
+                {formData.email.includes("@") && (
+                  <p style={styles.generatedLogin}>
+                    Login généré :{" "}
+                    {buildMaeLoginFromPersonalEmail(formData.email)}
+                  </p>
+                )}
               </div>
 
               <div style={styles.formGroup}>
@@ -420,9 +440,6 @@ function UsersPage() {
                 <span>Compte actif</span>
               </label>
 
-              {error && <div style={styles.errorBox}>{error}</div>}
-              {success && <div style={styles.successBox}>{success}</div>}
-
               <div style={styles.modalActions}>
                 <button
                   type="button"
@@ -432,7 +449,11 @@ function UsersPage() {
                   Annuler
                 </button>
 
-                <button type="submit" style={styles.primaryButton} disabled={saving}>
+                <button
+                  type="submit"
+                  style={styles.primaryButton}
+                  disabled={saving}
+                >
                   {saving
                     ? "Enregistrement..."
                     : editingUser
@@ -454,6 +475,7 @@ const styles = {
     flexDirection: "column",
     gap: "20px",
   },
+
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -461,17 +483,20 @@ const styles = {
     gap: "16px",
     flexWrap: "wrap",
   },
+
   title: {
     margin: 0,
     fontSize: "30px",
     color: "#1e293b",
     fontWeight: "700",
   },
+
   subtitle: {
     margin: "8px 0 0 0",
     color: "#64748b",
     fontSize: "15px",
   },
+
   card: {
     background: "#ffffff",
     borderRadius: "22px",
@@ -479,11 +504,13 @@ const styles = {
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
     overflowX: "auto",
   },
+
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    minWidth: "1000px",
+    minWidth: "1150px",
   },
+
   th: {
     textAlign: "left",
     padding: "14px 12px",
@@ -492,12 +519,14 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700",
   },
+
   td: {
     padding: "16px 12px",
     borderBottom: "1px solid #eef2f7",
     color: "#1e293b",
     fontSize: "14px",
   },
+
   tdStrong: {
     padding: "16px 12px",
     borderBottom: "1px solid #eef2f7",
@@ -505,11 +534,13 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700",
   },
+
   actions: {
     display: "flex",
     gap: "8px",
     flexWrap: "wrap",
   },
+
   roleAdminBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -519,6 +550,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   roleAgentBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -528,6 +560,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   activeBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -537,6 +570,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   inactiveBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -546,6 +580,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   mustChangeBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -555,6 +590,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   doneBadge: {
     display: "inline-block",
     padding: "7px 12px",
@@ -564,6 +600,7 @@ const styles = {
     fontWeight: "700",
     fontSize: "12px",
   },
+
   editButton: {
     border: "none",
     borderRadius: "10px",
@@ -573,6 +610,7 @@ const styles = {
     padding: "9px 12px",
     cursor: "pointer",
   },
+
   deleteButton: {
     border: "none",
     borderRadius: "10px",
@@ -582,6 +620,7 @@ const styles = {
     padding: "9px 12px",
     cursor: "pointer",
   },
+
   primaryButton: {
     border: "none",
     borderRadius: "12px",
@@ -591,6 +630,7 @@ const styles = {
     padding: "12px 18px",
     cursor: "pointer",
   },
+
   secondaryButton: {
     border: "1px solid #cbd5e1",
     borderRadius: "12px",
@@ -600,6 +640,7 @@ const styles = {
     padding: "12px 18px",
     cursor: "pointer",
   },
+
   overlay: {
     position: "fixed",
     inset: 0,
@@ -610,6 +651,7 @@ const styles = {
     padding: "20px",
     zIndex: 1000,
   },
+
   modal: {
     width: "100%",
     maxWidth: "640px",
@@ -618,6 +660,7 @@ const styles = {
     boxShadow: "0 20px 45px rgba(15, 23, 42, 0.18)",
     padding: "24px",
   },
+
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -625,11 +668,13 @@ const styles = {
     gap: "12px",
     marginBottom: "18px",
   },
+
   modalTitle: {
     margin: 0,
     fontSize: "22px",
     color: "#1e293b",
   },
+
   closeButton: {
     border: "none",
     background: "transparent",
@@ -637,26 +682,31 @@ const styles = {
     cursor: "pointer",
     color: "#64748b",
   },
+
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "16px",
   },
+
   row: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "14px",
   },
+
   formGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "8px",
   },
+
   label: {
     fontSize: "14px",
     fontWeight: "700",
     color: "#334155",
   },
+
   input: {
     height: "46px",
     borderRadius: "12px",
@@ -666,6 +716,14 @@ const styles = {
     outline: "none",
     background: "#ffffff",
   },
+
+  generatedLogin: {
+    margin: "6px 0 0 0",
+    color: "#166534",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
+
   checkboxRow: {
     display: "flex",
     alignItems: "center",
@@ -673,12 +731,14 @@ const styles = {
     color: "#334155",
     fontWeight: "600",
   },
+
   modalActions: {
     display: "flex",
     justifyContent: "flex-end",
     gap: "10px",
     marginTop: "6px",
   },
+
   errorBox: {
     background: "#fef2f2",
     color: "#dc2626",
@@ -687,6 +747,7 @@ const styles = {
     padding: "12px 14px",
     fontWeight: "600",
   },
+
   successBox: {
     background: "#f0fdf4",
     color: "#15803d",
@@ -695,6 +756,7 @@ const styles = {
     padding: "12px 14px",
     fontWeight: "600",
   },
+
   message: {
     margin: 0,
     color: "#64748b",

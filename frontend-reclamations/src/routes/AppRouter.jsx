@@ -1,19 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/auth/LoginPage";
 import ChangePasswordPage from "../pages/auth/ChangePasswordPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import ComplaintsPage from "../pages/complaints/ComplaintsPage";
-import ProtectedRoute from "../components/layout/ProtectedRoute";
-import AppLayout from "../components/layout/AppLayout";
 import ComplaintDetailsPage from "../pages/complaints/ComplaintDetailsPage";
 import UsersPage from "../pages/users/UsersPage";
 import ProfilePage from "../pages/profile/ProfilePage";
+import ProtectedRoute from "../components/layout/ProtectedRoute";
+import AppLayout from "../components/layout/AppLayout";
+
 function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route
           element={
