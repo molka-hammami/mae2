@@ -1,31 +1,48 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
 function ProfilePage() {
   const { user } = useContext(AuthContext);
   const fileInputRef = useRef(null);
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
+  const avatarKey = user?.id ? `avatar_${user.id}` : null;
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState("");
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    setName(user.name || "");
+    setEmail(user.email || "");
+
+    const savedAvatar = localStorage.getItem(`avatar_${user.id}`);
+    setAvatar(savedAvatar || "");
+  }, [user]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+
+    if (!file || !avatarKey) return;
 
     const reader = new FileReader();
 
     reader.onloadend = () => {
       setAvatar(reader.result);
-      localStorage.setItem("avatar", reader.result);
+      localStorage.setItem(avatarKey, reader.result);
+      window.dispatchEvent(new Event("avatarUpdated"));
     };
 
     reader.readAsDataURL(file);
   };
 
   const handleRemovePhoto = () => {
+    if (!avatarKey) return;
+
     setAvatar("");
-    localStorage.removeItem("avatar");
+    localStorage.removeItem(avatarKey);
+    window.dispatchEvent(new Event("avatarUpdated"));
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -35,6 +52,8 @@ function ProfilePage() {
   const handleSave = () => {
     alert("Profil mis à jour avec succès");
   };
+
+  if (!user) return null;
 
   return (
     <div style={styles.container}>
@@ -62,7 +81,7 @@ function ProfilePage() {
             <button
               type="button"
               style={styles.changePhotoBtn}
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
             >
               Modifier la photo
             </button>
@@ -108,15 +127,8 @@ function ProfilePage() {
 }
 
 const styles = {
-  container: {
-    padding: "30px",
-  },
-
-  title: {
-    marginBottom: "20px",
-    color: "#0f172a",
-  },
-
+  container: { padding: "30px" },
+  title: { marginBottom: "20px", color: "#0f172a" },
   card: {
     background: "#fff",
     padding: "30px",
@@ -126,7 +138,6 @@ const styles = {
     alignItems: "center",
     boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
   },
-
   avatarSection: {
     display: "flex",
     flexDirection: "column",
@@ -134,7 +145,6 @@ const styles = {
     gap: "14px",
     minWidth: "220px",
   },
-
   avatar: {
     width: "115px",
     height: "115px",
@@ -142,7 +152,6 @@ const styles = {
     objectFit: "cover",
     border: "4px solid #dcfce7",
   },
-
   defaultAvatar: {
     width: "115px",
     height: "115px",
@@ -156,14 +165,12 @@ const styles = {
     fontWeight: "700",
     border: "4px solid #dcfce7",
   },
-
   photoButtons: {
     display: "flex",
     gap: "10px",
     flexWrap: "wrap",
     justifyContent: "center",
   },
-
   changePhotoBtn: {
     border: "none",
     backgroundColor: "#166534",
@@ -173,7 +180,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
   },
-
   removePhotoBtn: {
     border: "none",
     backgroundColor: "#fee2e2",
@@ -183,21 +189,18 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
   },
-
   form: {
     display: "flex",
     flexDirection: "column",
     gap: "15px",
     width: "320px",
   },
-
   input: {
     padding: "11px 12px",
     borderRadius: "8px",
     border: "1px solid #cbd5e1",
     fontSize: "14px",
   },
-
   button: {
     background: "#166534",
     color: "#fff",

@@ -2,18 +2,11 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ComplaintTable from "../../components/complaints/ComplaintTable";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+
 import PageLoader from "../../components/common/PageLoader";
 function DashboardPage() {
   const { user } = useContext(AuthContext);
-
+  const [allComplaints, setAllComplaints] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,6 +56,12 @@ function DashboardPage() {
 
         const data = await response.json();
         setComplaints(data);
+        const allResponse = await fetch("http://127.0.0.1:8000/api/reclamations/");
+
+if (allResponse.ok) {
+  const allData = await allResponse.json();
+  setAllComplaints(allData);
+}
       } catch (err) {
         setError(err.message || "Une erreur est survenue");
       } finally {
@@ -220,37 +219,38 @@ function DashboardPage() {
   }, [filteredComplaints, currentPage]);
 
   const categoryStats = useMemo(() => {
-    const counts = {};
+  const sourceData = user?.role === "AGENT" ? allComplaints : complaints;
 
-    complaints.forEach((item) => {
-      const category = normalizeCategory(item);
-      counts[category] = (counts[category] || 0) + 1;
-    });
+  const counts = {};
 
-    const categoryOrder = [
-      "SERVICE CLIENT",
-      "SINISTRE AUTO",
-      "SINISTRE VIE",
-      "SINISTRE IRDS",
-      "NON CLASSÉE",
-    ];
+  sourceData.forEach((item) => {
+    const category = normalizeCategory(item);
+    counts[category] = (counts[category] || 0) + 1;
+  });
 
-    const categoryColors = {
-      "SERVICE CLIENT": "#3f8d69",
-      "SINISTRE AUTO": "#5d97e6",
-      "SINISTRE VIE": "#7ebd85",
-      "SINISTRE IRDS": "#a9d798",
-      "NON CLASSÉE": "#e97667",
-    };
+  const categoryOrder = [
+    "SERVICE CLIENT",
+    "SINISTRE AUTO",
+    "SINISTRE VIE",
+    "SINISTRE IRDS",
+    "NON CLASSÉE",
+  ];
 
-    return categoryOrder
-      .filter((label) => counts[label])
-      .map((label) => ({
-        label,
-        value: counts[label],
-        color: categoryColors[label],
-      }));
-  }, [complaints]);
+  const categoryColors = {
+    "SERVICE CLIENT": "#166534",
+    "SINISTRE AUTO": "#2563eb",
+    "SINISTRE VIE": "#65b36f",
+    "SINISTRE IRDS": "#a9d798",
+    "NON CLASSÉE": "#e97667",
+  };
+
+  return categoryOrder.map((label) => ({
+    label,
+    value: counts[label] || 0,
+    color: categoryColors[label],
+    active: user?.role === "AGENT" && user?.assignedCategory === label,
+  }));
+}, [complaints, allComplaints, user]);
 
   const channelStats = useMemo(() => {
     const counts = {};
@@ -395,52 +395,16 @@ function DashboardPage() {
                 )}
               </div>
 
-              <div style={styles.pieChartBox}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={categoryStats}
-                      dataKey="value"
-                      nameKey="label"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={95}
-                      label={({ label, percent }) =>
-                        `${label} ${(percent * 100).toFixed(0)}%`
-                      }
-                      onClick={(data) =>
-                        setCategoryFilter(
-                          categoryFilter === data.label
-                            ? "Toutes"
-                            : data.label
-                        )
-                      }
-                    >
-                      {categoryStats.map((entry) => (
-                        <Cell
-                          key={entry.label}
-                          fill={entry.color}
-                          opacity={
-                            categoryFilter === "Toutes" ||
-                            categoryFilter === entry.label
-                              ? 1
-                              : 0.35
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
-                      ))}
-                    </Pie>
-
-                    <Tooltip
-                      formatter={(value, name) => [
-                        `${value} réclamation(s)`,
-                        name,
-                      ]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <CategoryOverview
+  data={categoryStats}
+  selectedCategory={categoryFilter}
+  user={user}
+  onSelect={(label) =>
+    runWithLoader(() =>
+      setCategoryFilter(categoryFilter === label ? "Toutes" : label)
+    )
+  }
+/>
             </div>
 
             <div style={styles.chartCard}>
@@ -558,7 +522,123 @@ function DashboardPage() {
     </div>
   );
 }
+function CategoryOverview({ data, selectedCategory, onSelect, user }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
 
+  if (!data.length || total === 0) {
+    return <p style={styles.emptyText}>Aucune donnée catégorie.</p>;
+  }
+
+  const activeCategory =
+    user?.role === "AGENT" ? user?.assignedCategory : selectedCategory;
+
+  const activeItem =
+    data.find((item) => item.label === activeCategory) ||
+    data.find((item) => item.value > 0) ||
+    data[0];
+
+  const percent = total ? Math.round((activeItem.value / total) * 100) : 0;
+
+  const radius = 105;
+  const circumference = Math.PI * radius;
+  const progress = (percent / 100) * circumference;
+
+  return (
+    <div style={styles.semiChartBox}>
+      <svg width="360" height="200" viewBox="0 0 360 200">
+  {/* fond */}
+  <path
+    d="M75 155 A105 105 0 0 1 285 155"
+    fill="none"
+    stroke="#e5e7eb"
+    strokeWidth="26"
+    strokeLinecap="round"
+  />
+
+  {/* arc actif */}
+  <path
+    d="M75 155 A105 105 0 0 1 285 155"
+    fill="none"
+    stroke={activeItem.color || "#166534"}
+    strokeWidth="26"
+    strokeLinecap="round"
+    strokeDasharray={`${progress} ${circumference}`}
+  />
+
+  {/* 🔥 labels autour */}
+ {(() => {
+  let cumulative = 0;
+
+  return data.map((item) => {
+    const p = item.value / total;
+    const mid = cumulative + p / 2;
+    cumulative += p;
+
+    const angle = Math.PI * (1 - mid);
+
+    const r1 = 105; // bord du demi cercle
+    const r2 = 125; // longueur ligne
+
+    const x1 = 180 + r1 * Math.cos(angle);
+    const y1 = 155 - r1 * Math.sin(angle);
+
+    const x2 = 180 + r2 * Math.cos(angle);
+    const y2 = 155 - r2 * Math.sin(angle);
+
+    return (
+      <line
+        key={item.label}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={item.color}
+        strokeWidth="2"
+      />
+    );
+  });
+})()}
+</svg>
+
+      <div style={styles.semiChartCenter}>
+        <h2 style={styles.semiPercent}>{percent}%</h2>
+        <p style={styles.semiLabel}>{activeItem.label}</p>
+        <span style={styles.semiValue}>
+          {activeItem.value} / {total} réclamations
+        </span>
+      </div>
+
+      <div style={styles.semiLegend}>
+        {data.map((item) => {
+          const itemPercent = total
+            ? Math.round((item.value / total) * 100)
+            : 0;
+
+          return (
+            <button
+              key={item.label}
+              style={{
+                ...styles.legendItem,
+                ...(item.label === activeItem.label
+                  ? styles.legendItemActive
+                  : {}),
+              }}
+              onClick={() => onSelect(item.label)}
+            >
+              <span
+                style={{
+                  ...styles.legendDot,
+                  background: item.color,
+                }}
+              />
+              {item.label} {itemPercent}%
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 function CompactFilter({ label, value, onChange, options }) {
   return (
     <div style={styles.compactFilter}>
@@ -843,7 +923,163 @@ const styles = {
     fontSize: "14px",
     fontWeight: "700",
   },
+singleCategoryBox: {
+  height: "250px",
+  borderRadius: "22px",
+  background: "linear-gradient(135deg, #ecfdf5, #ffffff)",
+  border: "1px solid #bbf7d0",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  boxShadow: "inset 0 0 0 1px rgba(22,101,52,0.04)",
+},
+semiChartBox: {
+  height: "310px",
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+},
 
+semiChartCenter: {
+  position: "absolute",
+  top: "112px",
+  textAlign: "center",
+},
+semiPercent: {
+  margin: 0,
+  fontSize: "44px",
+  color: "#0f172a",
+  fontWeight: "900",
+},
+
+semiLabel: {
+  margin: "4px 0",
+  color: "#166534",
+  fontSize: "15px",
+  fontWeight: "800",
+},
+
+semiValue: {
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "700",
+},
+
+semiLegend: {
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: "8px",
+  marginTop: "8px",
+},
+
+legendItem: {
+  border: "1px solid #e2e8f0",
+  background: "#ffffff",
+  borderRadius: "999px",
+  padding: "7px 10px",
+  fontSize: "12px",
+  fontWeight: "700",
+  color: "#475569",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+},
+
+legendItemActive: {
+  background: "#f0fdf4",
+  border: "1px solid #86efac",
+  color: "#166534",
+},
+
+legendDot: {
+  width: "9px",
+  height: "9px",
+  borderRadius: "50%",
+},
+singleIcon: {
+  width: "54px",
+  height: "54px",
+  borderRadius: "18px",
+  background: "#166534",
+  color: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "22px",
+  fontWeight: "800",
+  marginBottom: "14px",
+},
+
+singleLabel: {
+  margin: 0,
+  color: "#166534",
+  fontSize: "18px",
+  fontWeight: "800",
+},
+
+singleValue: {
+  margin: "10px 0",
+  color: "#0f172a",
+  fontSize: "52px",
+  lineHeight: 1,
+},
+
+singleSubtext: {
+  margin: 0,
+  color: "#64748b",
+  fontSize: "14px",
+  fontWeight: "600",
+},
+
+categoryGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, 1fr)",
+  gap: "14px",
+  marginTop: "18px",
+},
+
+categoryMiniCard: {
+  border: "2px solid #e2e8f0",
+  background: "#ffffff",
+  borderRadius: "18px",
+  padding: "16px",
+  textAlign: "left",
+  cursor: "pointer",
+  display: "grid",
+  gridTemplateColumns: "auto 1fr auto",
+  gap: "8px",
+  alignItems: "center",
+},
+
+categoryDot: {
+  width: "12px",
+  height: "12px",
+  borderRadius: "50%",
+},
+
+categoryMiniLabel: {
+  fontSize: "13px",
+  color: "#334155",
+  fontWeight: "800",
+},
+
+categoryMiniValue: {
+  fontSize: "22px",
+  color: "#0f172a",
+},
+
+categoryMiniPercent: {
+  gridColumn: "2 / 4",
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "700",
+},
   searchInputPro: {
     border: "none",
     outline: "none",
@@ -1128,7 +1364,117 @@ const styles = {
     cursor: "pointer",
     padding: "0 12px",
   },
+  gaugeBox: {
+  height: "270px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+},
 
+gaugeCenter: {
+  marginTop: "-78px",
+  textAlign: "center",
+},
+
+gaugeValue: {
+  margin: 0,
+  fontSize: "42px",
+  color: "#0f172a",
+  fontWeight: "800",
+},
+
+gaugeLabel: {
+  margin: "6px 0 0",
+  color: "#166534",
+  fontSize: "15px",
+  fontWeight: "800",
+},
+
+gaugeFooter: {
+  width: "245px",
+  marginTop: "28px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  color: "#64748b",
+  fontSize: "13px",
+},
+categoryRanking: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  marginTop: "18px",
+},
+
+categoryRankRow: {
+  width: "100%",
+  border: "1px solid #e2e8f0",
+  background: "#ffffff",
+  borderRadius: "16px",
+  padding: "14px",
+  cursor: "pointer",
+  textAlign: "left",
+},
+
+categoryRankRowActive: {
+  border: "2px solid #166534",
+  background: "#f0fdf4",
+},
+
+categoryRankTop: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "10px",
+},
+
+categoryRankName: {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  fontSize: "14px",
+  fontWeight: "800",
+  color: "#334155",
+},
+
+categoryRankDot: {
+  width: "10px",
+  height: "10px",
+  borderRadius: "50%",
+},
+
+categoryRankPercent: {
+  fontSize: "18px",
+  color: "#0f172a",
+},
+
+categoryRankBottom: {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+},
+
+categoryRankTrack: {
+  flex: 1,
+  height: "9px",
+  background: "#eef2f7",
+  borderRadius: "999px",
+  overflow: "hidden",
+},
+
+categoryRankFill: {
+  height: "100%",
+  borderRadius: "999px",
+},
+
+categoryRankValue: {
+  minWidth: "120px",
+  fontSize: "12px",
+  fontWeight: "700",
+  color: "#64748b",
+},
   pageButtonDisabled: {
     opacity: 0.5,
     cursor: "not-allowed",

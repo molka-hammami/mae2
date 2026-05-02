@@ -13,7 +13,7 @@ const ROLE_OPTIONS = ["AGENT", "ADMIN"];
 
 const initialForm = {
   name: "",
-  email: "", // email personnel
+  email: "",
   password: "",
   role: "AGENT",
   assigned_category: "",
@@ -104,6 +104,8 @@ function UsersPage() {
   };
 
   const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!formData.name.trim()) {
       return "Le nom est obligatoire.";
     }
@@ -112,7 +114,7 @@ function UsersPage() {
       return "L'email personnel est obligatoire.";
     }
 
-    if (!formData.email.includes("@")) {
+    if (!emailRegex.test(formData.email.trim())) {
       return "Veuillez écrire un email personnel valide, exemple : agent@gmail.com.";
     }
 
@@ -179,6 +181,8 @@ function UsersPage() {
         throw new Error(
           data?.error ||
             data?.detail ||
+            data?.email?.[0] ||
+            data?.personal_email?.[0] ||
             "Erreur lors de l'enregistrement de l'utilisateur."
         );
       }
@@ -186,14 +190,14 @@ function UsersPage() {
       setSuccess(
         editingUser
           ? "Utilisateur modifié avec succès."
-          : "Utilisateur créé avec succès."
+          : "Utilisateur créé avec succès. Un email a été envoyé à l'agent."
       );
 
       await loadUsers();
 
       setTimeout(() => {
         closeModal();
-      }, 500);
+      }, 600);
     } catch (err) {
       setError(err.message || "Une erreur est survenue.");
     } finally {
@@ -390,7 +394,7 @@ function UsersPage() {
                   value={formData.password}
                   onChange={handleChange}
                   style={styles.input}
-                  placeholder="Ex: Agent123"
+                  placeholder="Ex: Agent123!"
                 />
               </div>
 
