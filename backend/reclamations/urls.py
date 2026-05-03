@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-
+from .views import feedback_stats
 urlpatterns = [
     path("reclamations/", views.reclamation_list, name="reclamation_list"),
     path("reclamations/<int:pk>/", views.reclamation_detail, name="reclamation_detail"),
@@ -17,4 +17,5 @@ path(
     views.classify_reclamation,
     name="classify_reclamation",
 ),
+path("feedback-stats/", feedback_stats),
 ]

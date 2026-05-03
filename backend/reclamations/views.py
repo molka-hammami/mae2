@@ -7,8 +7,129 @@ from rest_framework import status
 
 from .models import ReclamationCase, ReclamationActionLog
 from .serializers import ReclamationSerializer
+from .models import ReclamationCase, ReclamationActionLog, Annotation
+import unicodedata
+import re
 
 
+def contains_arabic(text):
+    return any("\u0600" <= char <= "\u06FF" for char in text)
+
+
+def normalize_latin_name(name):
+    name = unicodedata.normalize("NFKD", name)
+    name = name.encode("ascii", "ignore").decode("utf-8")
+    name = re.sub(r"[^a-zA-Z\s]", " ", name)
+    return name.strip().lower()
+
+
+def normalize_arabic_name(name):
+    name = re.sub(r"[^\u0600-\u06FF\s]", " ", name)
+
+    replacements = {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ى": "ي",
+        "ة": "ه",
+    }
+
+    for old, new in replacements.items():
+        name = name.replace(old, new)
+
+    return name.strip()
+
+
+def guess_gender(name):
+    if not name:
+        return None
+
+    raw_name = name.strip()
+    is_arabic = contains_arabic(raw_name)
+
+    cleaned_name = (
+        normalize_arabic_name(raw_name)
+        if is_arabic
+        else normalize_latin_name(raw_name)
+    )
+
+    if not cleaned_name:
+        return "Autre"
+
+    parts = cleaned_name.split()
+
+    male_names = {
+        "mohamed", "mohammed", "mohamad", "mouhamed",
+        "ahmed", "ahmad", "ali", "youssef", "yousef",
+        "karim", "kareem", "mehdi", "amine", "amin",
+        "walid", "houssem", "anis", "omar", "hassan",
+        "hamza", "bilal", "khaled", "firas", "sami",
+        "nabil", "zakaria", "riad", "aymen", "souhail",
+        "tarek", "rafik", "lotfi", "chokri", "habib",
+        "saber", "imad", "yassine", "skander", "montassar",
+        "ghazi", "zouhair", "adel", "faouzi", "kais",
+        "noureddine", "salah", "mondher", "mounir", "ridha",
+        "hachem", "bechir", "bachir", "abdallah", "aziz",
+        "rayen", "ilyes", "adam", "yazan", "maher", "rami",
+        "nizar", "khalil", "hamdi", "sari", "fadi", "ziad",
+        "imran", "aidel", "dali", "sassi", "mustapha",
+        "monji", "abou", "wajih", "wejih", "neder", "nader",
+        "amen", "med", "borhene", "mahmoud", "abdellatif",
+        "jalel", "jamal", "jamel", "medkhaled", "fathi",
+
+        "محمد", "احمد", "علي", "يوسف", "كريم", "مهدي",
+        "امين", "وليد", "حسام", "انيس", "عمر", "حسن",
+        "حمزه", "بلال", "خالد", "فراس", "سامي", "نبيل",
+        "زكريا", "رياض", "ايمن", "سهيل", "طارق", "رفيق",
+        "لطفي", "شكري", "حبيب", "صابر", "عماد", "ياسين",
+        "اسكندر", "منتصر", "غازي", "زهير", "عادل", "فوزي",
+        "قيس", "نورالدين", "صالح", "منذر", "منير", "رضا",
+        "هاشم", "بشير", "عبدالله", "عزيز", "ريان", "الياس",
+        "ادم", "ماهر", "رامي", "نزار", "خليل", "حمدي",
+        "زياد", "عمران",
+    }
+
+    female_names = {
+        "aicha", "aisha", "aycha", "nadia", "molka",
+        "sarra", "sara", "ranim", "ranym", "fatma",
+        "imen", "ines", "inesse", "dorra", "nour",
+        "amal", "rahma", "chaima", "chayma", "chaimaa",
+        "marwa", "maroua", "salma", "asma", "asmaa",
+        "hiba", "rim", "wafa", "sana", "hayet", "najla",
+        "soumaya", "faiza", "lamia", "kaouthar", "nermine",
+        "sirine", "dina", "yasmin", "yasmine", "mouna",
+        "emna", "ghada", "najet", "samira", "monia",
+        "hanene", "afef", "khaoula", "ikram", "abir",
+        "henda", "dalenda", "feten", "beya", "saoussen",
+        "ahlem", "syrine", "insaf", "hend", "aya", "rania",
+        "lina", "nada", "malak", "selma", "islem", "tasnim",
+        "farah", "maram", "jihen", "ranya", "mayssa", "roua",
+        "nourhen", "doaa", "iman", "zeineb", "zaineb",
+        "zainab", "zayneb", "zeyneb", "mariam", "mariem",
+        "meriam", "maryem", "sayida", "saida", "hasna",
+        "hassna", "hana", "sa", "ol",
+
+        "عائشه", "فاطمه", "ساره", "سارة", "ايناس", "ايمان",
+        "ملك", "رحمه", "امل", "نور", "درة", "دره", "مريم",
+        "ريم", "وفاء", "سناء", "حياة", "حياه", "نجلاء",
+        "سمية", "سميه", "فايزه", "لمياء", "كوثر", "نرمين",
+        "سيرين", "دينا", "ياسمين", "منى", "امنه", "غاده",
+        "نجاة", "نجاه", "سميره", "منيه", "حنان", "عفاف",
+        "خوله", "اكرام", "عبير", "هند", "فتن", "باية",
+        "بايه", "سوسن", "احلام", "انصاف", "ايه", "رانية",
+        "رانيه", "لينا", "ندى", "تسنيم", "فرح", "مرام",
+        "جيهان", "ميساء", "رؤى", "دعاء",
+    }
+
+    for part in parts:
+        if part in male_names:
+            return "Homme"
+
+    for part in parts:
+        if part in female_names:
+            return "Femme"
+
+    return "Autre"
 @api_view(["GET"])
 def reclamation_list(request):
     role = request.GET.get("role", "")
@@ -109,7 +230,26 @@ def classify_reclamation(request, pk):
     serializer = ReclamationSerializer(reclamation)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(["GET"])
+def feedback_stats(request):
+    reclamations_count = Annotation.objects.filter(
+        is_reclamation="reclamation"
+    ).count()
 
+    good_feedbacks_count = Annotation.objects.filter(
+        is_reclamation="non_reclamation"
+    ).count()
+
+    total = reclamations_count + good_feedbacks_count
+
+    return Response(
+        {
+            "total": total,
+            "reclamations": reclamations_count,
+            "good_feedbacks": good_feedbacks_count,
+        },
+        status=status.HTTP_200_OK,
+    )
 @api_view(["PATCH"])
 def mark_as_processed(request, pk):
     reclamation = get_object_or_404(

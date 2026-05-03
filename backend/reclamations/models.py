@@ -9,14 +9,13 @@ class Comment(models.Model):
     text_original = models.TextField(null=True, blank=True)
     clean_text = models.TextField(null=True, blank=True)
 
-    # ✅ AJOUTE ÇA
     author_name = models.TextField(null=True, blank=True)
+    author_gender = models.CharField(max_length=20, null=True, blank=True)
     created_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "comments"
         managed = False
-
 
 class Annotation(models.Model):
     id = models.AutoField(primary_key=True)

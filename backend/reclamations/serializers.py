@@ -21,7 +21,14 @@ class ReclamationSerializer(serializers.ModelSerializer):
     comment_date = serializers.CharField(source="comment.comment_date", read_only=True)
     text_original = serializers.CharField(source="comment.text_original", read_only=True)
     author_name = serializers.CharField(source="comment.author_name", read_only=True)
+    author_gender = serializers.CharField(
+        source="comment.author_gender",
+        allow_null=True,
+        allow_blank=True,
+        read_only=True,
+    )
     created_at = serializers.DateTimeField(source="comment.created_at", read_only=True)
+
     category = serializers.CharField(
         source="comment.annotation.category",
         allow_null=True,
@@ -81,6 +88,7 @@ class ReclamationSerializer(serializers.ModelSerializer):
             "comment_url",
             "action_logs",
             "author_name",
+            "author_gender",
             "created_at",
         ]
 
