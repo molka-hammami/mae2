@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import { FiChevronDown, FiLock, FiLogOut, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -11,22 +12,14 @@ function Header() {
 
   useEffect(() => {
     const loadAvatar = () => {
-      if (!user?.id) {
-        setAvatar("");
-        return;
-      }
-
-      const savedAvatar = localStorage.getItem(`avatar_${user.id}`);
-      setAvatar(savedAvatar || "");
+      if (!user?.id) return setAvatar("");
+      setAvatar(localStorage.getItem(`avatar_${user.id}`) || "");
     };
 
     loadAvatar();
-
     window.addEventListener("avatarUpdated", loadAvatar);
 
-    return () => {
-      window.removeEventListener("avatarUpdated", loadAvatar);
-    };
+    return () => window.removeEventListener("avatarUpdated", loadAvatar);
   }, [user]);
 
   const handleLogout = () => {
@@ -41,10 +34,17 @@ function Header() {
 
   return (
     <header style={styles.header}>
-      <h2 style={styles.title}>Tableau de bord</h2>
+      <div>
+        <h2 style={styles.title}>Tableau de bord</h2>
+        <p style={styles.subtitle}>Bienvenue dans votre espace de gestion</p>
+      </div>
 
       <div style={styles.userMenuWrapper}>
-        <div style={styles.userMenu} onClick={() => setOpenMenu(!openMenu)}>
+        <button
+          type="button"
+          style={styles.userMenu}
+          onClick={() => setOpenMenu(!openMenu)}
+        >
           {avatar ? (
             <img src={avatar} alt="avatar" style={styles.avatarImage} />
           ) : (
@@ -53,27 +53,29 @@ function Header() {
             </div>
           )}
 
-          <div>
+          <div style={styles.userText}>
             <p style={styles.userName}>{user?.name || "Utilisateur"}</p>
             <span style={styles.userRole}>{user?.role || ""}</span>
           </div>
-        </div>
+
+          <FiChevronDown size={17} />
+        </button>
 
         {openMenu && (
           <div style={styles.dropdown}>
             <button style={styles.dropdownBtn} onClick={() => goTo("/profile")}>
-              👤 Mon profil
+              <FiUser /> Mon profil
             </button>
 
             <button
               style={styles.dropdownBtn}
               onClick={() => goTo("/change-password")}
             >
-              🔐 Changer mot de passe
+              <FiLock /> Changer mot de passe
             </button>
 
             <button style={styles.dropdownBtnDanger} onClick={handleLogout}>
-              🚪 Déconnexion
+              <FiLogOut /> Déconnexion
             </button>
           </div>
         )}
@@ -84,23 +86,31 @@ function Header() {
 
 const styles = {
   header: {
-    height: "78px",
+    height: "64px",
     backgroundColor: "#ffffff",
     flexShrink: 0,
     position: "sticky",
     top: 0,
     zIndex: 50,
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom: "1px solid #e5e7eb",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 24px",
+    padding: "0 20px",
+    boxShadow: "0 4px 18px rgba(15, 23, 42, 0.04)",
   },
 
   title: {
     margin: 0,
-    fontSize: "20px",
-    color: "#1e293b",
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+
+  subtitle: {
+    margin: "5px 0 0",
+    fontSize: "12px",
+    color: "#64748b",
   },
 
   userMenuWrapper: {
@@ -113,75 +123,92 @@ const styles = {
     gap: "10px",
     cursor: "pointer",
     padding: "6px 10px",
-    borderRadius: "12px",
+    borderRadius: "14px",
+    border: "1px solid #e2e8f0",
+    backgroundColor: "#f8fafc",
+    color: "#0f172a",
+  },
+
+  userText: {
+    textAlign: "left",
   },
 
   userName: {
     margin: 0,
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: "700",
+    color: "#0f172a",
+    fontSize: "13px",
+    textTransform: "capitalize",
   },
 
   userRole: {
-    fontSize: "12px",
+    fontSize: "11px",
     color: "#64748b",
+    fontWeight: "600",
   },
 
   avatarImage: {
-    width: "40px",
-    height: "40px",
+    width: "36px",
+    height: "36px",
     borderRadius: "50%",
     objectFit: "cover",
-    border: "2px solid #dcfce7",
+    border: "2px solid #bbf7d0",
   },
 
   avatar: {
-    width: "40px",
-    height: "40px",
+    width: "36px",
+    height: "36px",
     borderRadius: "50%",
     backgroundColor: "#166534",
     color: "#ffffff",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "700",
+    fontWeight: "800",
   },
 
   dropdown: {
     position: "absolute",
-    top: "52px",
+    top: "58px",
     right: 0,
     background: "#ffffff",
     borderRadius: "14px",
-    boxShadow: "0 12px 30px rgba(15, 23, 42, 0.15)",
+    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.16)",
     padding: "10px",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
-    minWidth: "220px",
+    gap: "7px",
+    minWidth: "230px",
     zIndex: 1000,
+    border: "1px solid #e2e8f0",
   },
 
   dropdownBtn: {
     padding: "11px 12px",
     border: "none",
-    background: "#f8fafc",
+    background: "#ffffff",
     borderRadius: "10px",
     cursor: "pointer",
     textAlign: "left",
     fontWeight: "600",
     color: "#1e293b",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
   },
 
   dropdownBtnDanger: {
     padding: "11px 12px",
     border: "none",
-    background: "#fef2f2",
+    background: "#fff7f7",
     borderRadius: "10px",
     cursor: "pointer",
     textAlign: "left",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#dc2626",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
   },
 };
 

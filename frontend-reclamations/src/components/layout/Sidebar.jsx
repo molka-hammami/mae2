@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import logoMae from "../../assets/mae.png";
+import { FiHome, FiFileText, FiUsers } from "react-icons/fi";
 
 function Sidebar() {
   const { user, logout } = useContext(AuthContext);
@@ -15,156 +16,195 @@ function Sidebar() {
   return (
     <aside style={styles.sidebar}>
       <div>
-        <div style={styles.brandBlock}>
+        <div style={styles.logoBlock}>
           <img src={logoMae} alt="MAE Logo" style={styles.logoImage} />
+          <p style={styles.appName}>Gestion Réclamations</p>
         </div>
 
-        <nav style={styles.nav}>
-          <NavLink
-            to="/dashboard"
-            style={({ isActive }) => ({
-              ...styles.link,
-              ...(isActive ? styles.activeLink : {}),
-            })}
-          >
-            Dashboard
-          </NavLink>
+        <div style={styles.sectionTitle}>Menu principal</div>
 
-          <NavLink
-            to="/complaints"
-            style={({ isActive }) => ({
-              ...styles.link,
-              ...(isActive ? styles.activeLink : {}),
-            })}
-          >
-            Réclamations
-          </NavLink>
+        <nav style={styles.nav}>
+          <MenuLink to="/dashboard" icon={<FiHome />} label="Dashboard" />
+          <MenuLink to="/complaints" icon={<FiFileText />} label="Réclamations" />
 
           {user?.role === "ADMIN" && (
-            <NavLink
-              to="/users"
-              style={({ isActive }) => ({
-                ...styles.link,
-                ...(isActive ? styles.activeLink : {}),
-              })}
-            >
-              Utilisateurs
-            </NavLink>
+            <MenuLink to="/users" icon={<FiUsers />} label="Utilisateurs" />
           )}
         </nav>
       </div>
 
       <div style={styles.footerBlock}>
-        <div style={styles.userBox}>
-          <p style={styles.userName}>{user?.name || "Utilisateur"}</p>
-          <p style={styles.userRole}>{user?.role || "ADMIN"}</p>
-        </div>
+        <NavLink to="/profile" style={styles.userBox}>
+          <div style={styles.avatar}>
+            {(user?.name || "U").charAt(0).toUpperCase()}
+          </div>
+
+          <div>
+            <p style={styles.userName}>{user?.name || "Utilisateur"}</p>
+            <p style={styles.userRole}>{user?.role || "ADMIN"}</p>
+          </div>
+        </NavLink>
 
         <button onClick={handleLogout} style={styles.button}>
-          Déconnexion
+          Se déconnecter
         </button>
       </div>
     </aside>
   );
 }
 
+function MenuLink({ to, icon, label }) {
+  return (
+    <NavLink
+      to={to}
+      style={({ isActive }) => ({
+        ...styles.link,
+        ...(isActive ? styles.activeLink : {}),
+      })}
+    >
+      <span style={styles.icon}>{icon}</span>
+      <span>{label}</span>
+    </NavLink>
+  );
+}
+
 const styles = {
   sidebar: {
-    width: "280px",
+    width: "270px",
     minHeight: "100vh",
-    background:
-      "linear-gradient(180deg, #166534 0%, #14532d 55%, #0f4d29 100%)",
+    background: "#0b4f2f",
     color: "#ffffff",
-    padding: "26px 18px 20px 18px",
+    padding: "24px 18px",
     display: "flex",
     flexDirection: "column",
+    justifyContent: "space-between",
     flexShrink: 0,
     position: "sticky",
     top: 0,
-    justifyContent: "space-between",
-    overflowY: "auto",
     boxSizing: "border-box",
-    boxShadow: "6px 0 24px rgba(15, 23, 42, 0.08)",
+    borderRight: "1px solid rgba(255,255,255,0.08)",
   },
 
-  brandBlock: {
+  logoBlock: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: "10px",
-    marginBottom: "34px",
-    paddingTop: "4px",
+    marginBottom: "32px",
   },
 
   logoImage: {
     width: "92px",
     height: "92px",
     objectFit: "contain",
-    backgroundColor: "transparent",
-    padding: 0,
-    display: "block",
+    marginBottom: "10px",
+  },
+
+  appName: {
+    margin: 0,
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#d1fae5",
+    letterSpacing: "0.3px",
+  },
+
+  sectionTitle: {
+    fontSize: "11px",
+    fontWeight: "700",
+    color: "#9be7bd",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    margin: "0 0 12px 10px",
   },
 
   nav: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    marginTop: "10px",
+    gap: "8px",
   },
 
   link: {
-    display: "block",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
     textDecoration: "none",
-    color: "#ffffff",
-    padding: "14px 16px",
-    borderRadius: "14px",
+    color: "#d1fae5",
+    padding: "13px 14px",
+    borderRadius: "12px",
     fontWeight: "600",
-    fontSize: "16px",
-    transition: "all 0.2s ease",
+    fontSize: "15px",
+    transition: "0.2s ease",
   },
 
   activeLink: {
-    backgroundColor: "#15803d",
-    boxShadow: "0 8px 20px rgba(0, 0, 0, 0.12)",
+    backgroundColor: "rgba(255,255,255,0.1)", // léger highlight
+    color: "#ffffff",
+    borderLeft: "4px solid #22c55e", // effet pro
+  },
+
+  icon: {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "18px",
+  color: "#bbf7d0",
   },
 
   footerBlock: {
-    marginTop: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
   },
 
   userBox: {
-    background: "rgba(21, 128, 61, 0.95)",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: "14px",
-    padding: "14px 14px",
-    marginBottom: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
+    padding: "13px",
+    border: "1px solid rgba(255,255,255,0.1)",
+    textDecoration: "none",
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+
+  avatar: {
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    backgroundColor: "#ffffff",
+    color: "#0b4f2f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "800",
+    fontSize: "17px",
   },
 
   userName: {
     margin: 0,
     fontWeight: "700",
-    fontSize: "15px",
+    fontSize: "14px",
     color: "#ffffff",
+    textTransform: "capitalize",
   },
 
   userRole: {
-    margin: "4px 0 0 0",
-    fontSize: "13px",
-    color: "#dcfce7",
-    letterSpacing: "0.3px",
+    margin: "3px 0 0",
+    fontSize: "12px",
+    color: "#bbf7d0",
   },
 
   button: {
     width: "100%",
-    padding: "13px 14px",
+    padding: "13px",
     border: "none",
-    borderRadius: "14px",
-    backgroundColor: "#ffffff",
-    color: "#166534",
-    fontWeight: "700",
-    fontSize: "15px",
+    borderRadius: "12px",
+    backgroundColor: "#f8fafc",
+    color: "#0b4f2f",
+    fontWeight: "800",
+    fontSize: "14px",
     cursor: "pointer",
-    boxShadow: "0 8px 18px rgba(0, 0, 0, 0.08)",
   },
 };
 

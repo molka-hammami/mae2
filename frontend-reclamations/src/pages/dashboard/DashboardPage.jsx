@@ -212,10 +212,30 @@ if (allResponse.ok) {
     Math.ceil(filteredComplaints.length / itemsPerPage)
   );
 
+  const urgencyOrder = {
+    elevee: 1,
+    moyenne: 2,
+    faible: 3,
+  };
+
   const paginatedComplaints = useMemo(() => {
+    const urgencyOrder = {
+      elevee: 1,
+      moyenne: 2,
+      faible: 3,
+    };
+
+    const sorted = [...filteredComplaints].sort((a, b) => {
+      return (
+        (urgencyOrder[a.urgency] || 99) -
+        (urgencyOrder[b.urgency] || 99)
+      );
+    });
+
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredComplaints.slice(start, end);
+
+    return sorted.slice(start, end);
   }, [filteredComplaints, currentPage]);
 
   const categoryStats = useMemo(() => {
