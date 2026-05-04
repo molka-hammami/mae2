@@ -13,7 +13,7 @@ class AppUser(models.Model):
         ("SINISTRE VIE", "SINISTRE VIE"),
         ("SINISTRE IRDS", "SINISTRE IRDS"),
     ]
-
+    
     name = models.CharField(max_length=150)
 
     # Login automatique généré : exemple ranim@mae.tn
@@ -25,7 +25,7 @@ class AppUser(models.Model):
     password = models.CharField(max_length=255)
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="AGENT")
-
+    recovery_email = models.EmailField(blank=True, null=True)
     must_change_password = models.BooleanField(default=True)
 
     assigned_category = models.CharField(

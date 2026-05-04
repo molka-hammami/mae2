@@ -4,7 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 function ProfilePage() {
   const { user } = useContext(AuthContext);
   const fileInputRef = useRef(null);
-
+  const [recoveryEmail, setRecoveryEmail] = useState(user?.recovery_email || "");
   const avatarKey = user?.id ? `avatar_${user.id}` : null;
 
   const [name, setName] = useState("");
@@ -52,7 +52,11 @@ function ProfilePage() {
   const handleSave = () => {
     alert("Profil mis à jour avec succès");
   };
-
+const payload = {
+  name,
+  email,
+  recovery_email: recoveryEmail,
+};
   if (!user) return null;
 
   return (
@@ -106,7 +110,13 @@ function ProfilePage() {
             placeholder="Nom"
             style={styles.input}
           />
-
+          <input
+  type="email"
+  value={recoveryEmail}
+  onChange={(e) => setRecoveryEmail(e.target.value)}
+  placeholder="Email de récupération"
+  style={styles.input}
+/>
           <input
             type="email"
             value={email}

@@ -6,4 +6,51 @@
   to {
     transform: rotate(360deg);
   }
+  
+}
+/* selected range */
+.rdrInRange,
+.rdrStartEdge,
+.rdrEndEdge {
+  background: #166534 !important; /* MAE green */
+}
+
+/* hover effect */
+.rdrDay:hover .rdrDayNumber span {
+  background: #22c55e !important;
+  color: white;
+}
+
+/* today border */
+.rdrDayToday .rdrDayNumber span:after {
+  background: #166534;
+}
+body {
+  font-family: "Montserrat", sans-serif;
+}
+.agencyLegend i,
+span i {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.mae-marker-pin {
+  width: 26px;
+  height: 26px;
+  background: #166534;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 10px 20px rgba(22, 101, 52, 0.35);
+}
+
+.mae-marker-pin span {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: block;
+  margin: 6px auto;
 }

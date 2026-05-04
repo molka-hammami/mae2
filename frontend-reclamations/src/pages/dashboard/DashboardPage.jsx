@@ -14,10 +14,16 @@ import {
   Bar,
   XAxis,
   YAxis,
+  LineChart,
+Line,
+CartesianGrid,
 } from "recharts";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 function DashboardPage() {
   const [startDate, setStartDate] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
@@ -29,7 +35,7 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pageLoading, setPageLoading] = useState(false);
-
+  const [genderFilter, setGenderFilter] = useState("Tous");
   const [activeTab, setActiveTab] = useState("toutes");
   const [channelFilter, setChannelFilter] = useState("Tous");
   const [categoryFilter, setCategoryFilter] = useState("Toutes");
@@ -114,6 +120,7 @@ if (feedbackResponse.ok) {
     setStartDate("");
     setEndDate("");
     setShowCalendar(false);
+    setGenderFilter("Tous");
     setCurrentPage(1);
   };
 
@@ -224,7 +231,10 @@ if (feedbackResponse.ok) {
     if (complaintDate > end) return false;
   }
 }
-
+  if (genderFilter !== "Tous") {
+  const gender = item.author_gender || "Autre";
+  if (gender !== genderFilter) return false;
+}
       return true;
     });
   }, [
@@ -235,6 +245,7 @@ if (feedbackResponse.ok) {
   searchTerm,
   startDate,
   endDate,
+  genderFilter,
   ]);
 
   const filteredComplaints = useMemo(() => {
@@ -407,12 +418,25 @@ if (feedbackResponse.ok) {
 
  {showCalendar && (
   <div style={styles.calendarDropdown}>
-    <DateRange
-      editableDateInputs={true}
-      onChange={(item) => setRange([item.selection])}
-      moveRangeOnFirstSelection={false}
-      ranges={range}
-    />
+  <div style={styles.calendarWrapper}>
+  
+  {/* Inputs */}
+ 
+
+  {/* Calendar */}
+  <DateRange
+    editableDateInputs={true}
+    onChange={(item) => {
+      setRange([item.selection]);
+      setStartDate(item.selection.startDate.toISOString().split("T")[0]);
+      setEndDate(item.selection.endDate.toISOString().split("T")[0]);
+    }}
+    moveRangeOnFirstSelection={false}
+    ranges={range}
+    showMonthAndYearPickers={false}
+  />
+
+</div>
 
     <button
       style={styles.calendarApplyBtn}
@@ -492,92 +516,176 @@ if (feedbackResponse.ok) {
             />
           </div>
 
-          <div style={styles.chartsGrid}>
-            <div style={styles.chartCard}>
-              <div style={styles.chartTitleRow}>
-                <h3 style={styles.cardTitle}>Réclamations par Catégorie</h3>
+       
+<div style={styles.chartsGrid}>
+  <div style={styles.chartCard}>
+    <div style={styles.chartTitleRow}>
+      <h3 style={styles.cardTitle}>Réclamations par Catégorie</h3>
 
-                {categoryFilter !== "Toutes" && (
-                  <button
-                    style={styles.clearChartFilter}
-                    onClick={() => runWithLoader(() => setCategoryFilter("Toutes"))}
-                  >
-                    Toutes
-                  </button>
-                )}
-              </div>
+      {categoryFilter !== "Toutes" && (
+        <button
+          style={styles.clearChartFilter}
+          onClick={() => runWithLoader(() => setCategoryFilter("Toutes"))}
+        >
+          Toutes
+        </button>
+      )}
+    </div>
 
-              {user?.role === "ADMIN" ? (
-                <AdminCategoryPie
-                  data={categoryStats}
-                  selectedCategory={categoryFilter}
-                  onSelect={(label) =>
-                    runWithLoader(() =>
-                      setCategoryFilter(categoryFilter === label ? "Toutes" : label)
-                    )
-                  }
-                />
-              ) : (
-                <AgentCategoryGauge
-                  data={categoryStats}
-                  user={user}
-                />
-              )}
-            </div>
-            
-            <div style={styles.fullWidthChartCard}>
-  <div style={styles.chartTitleRow}>
-    <h3 style={styles.cardTitle}>Répartition par Sexe</h3>
-  </div>
-              
-  <GenderChart data={genderStats} />
-</div>
-          <div style={styles.smallChartCard}>
-              <div style={styles.chartTitleRow}>
-                <h3 style={styles.cardTitle}>Répartition par Canal</h3>
-
-                {channelFilter !== "Tous" && (
-                  <button
-                    style={styles.clearChartFilter}
-                    onClick={() => setChannelFilter("Tous")}
-                  >
-                    Tous
-                  </button>
-                )}
-              </div>
-
-              {channelStats.length > 0 ? (
-                channelStats.map((item) => (
-                  <ChannelRow
-                    key={item.label}
-                    label={item.label}
-                    value={item.value}
-                    percent={item.percent}
-                    width={item.width}
-                    isActive={channelFilter === "Tous" || channelFilter === item.label}
-                    isHovered={hoveredChannel === item.label}
-                    onMouseEnter={() => setHoveredChannel(item.label)}
-                    onMouseLeave={() => setHoveredChannel(null)}
-                    onClick={() =>
-                      setChannelFilter(channelFilter === item.label ? "Tous" : item.label)
-                    }
-                  />
-                ))
-              ) : (
-                <p style={styles.emptyText}>Aucune donnée canal.</p>
-              )}
-            </div>
-            <div style={styles.chartCard}>
-  <div style={styles.chartTitleRow}>
-    <h3 style={styles.cardTitle}>Feedbacks positifs</h3>
+    {user?.role === "ADMIN" ? (
+      <AdminCategoryPie
+        data={categoryStats}
+        selectedCategory={categoryFilter}
+        onSelect={(label) =>
+          runWithLoader(() =>
+            setCategoryFilter(categoryFilter === label ? "Toutes" : label)
+          )
+        }
+      />
+    ) : (
+      <AgentCategoryGauge data={categoryStats} user={user} />
+    )}
   </div>
 
-  <FeedbackChart data={feedbackStats} />
-</div>
-          
-</div>
+  <div style={styles.fullWidthChartCard}>
+    <div style={styles.chartTitleRow}>
+      <h3 style={styles.cardTitle}>Répartition par Sexe</h3>
+    </div>
 
+    <GenderChart
+      data={genderStats}
+      genderFilter={genderFilter}
+      onSelectGender={(gender) =>
+        setGenderFilter(genderFilter === gender ? "Tous" : gender)
+      }
+    />
+  </div>
 
+  <div style={styles.smallChartCard}>
+    <div style={styles.chartTitleRow}>
+      <h3 style={styles.cardTitle}>Répartition par Canal</h3>
+
+      {channelFilter !== "Tous" && (
+        <button
+          style={styles.clearChartFilter}
+          onClick={() => setChannelFilter("Tous")}
+        >
+          Tous
+        </button>
+      )}
+    </div>
+
+    {channelStats.length > 0 ? (
+      channelStats.map((item) => (
+        <ChannelRow
+          key={item.label}
+          label={item.label}
+          value={item.value}
+          percent={item.percent}
+          width={item.width}
+          isActive={channelFilter === "Tous" || channelFilter === item.label}
+          isHovered={hoveredChannel === item.label}
+          onMouseEnter={() => setHoveredChannel(item.label)}
+          onMouseLeave={() => setHoveredChannel(null)}
+          onClick={() =>
+            setChannelFilter(channelFilter === item.label ? "Tous" : item.label)
+          }
+        />
+      ))
+    ) : (
+      <p style={styles.emptyText}>Aucune donnée canal.</p>
+    )}
+  </div>
+
+  <div style={styles.chartCard}>
+    <div style={styles.chartTitleRow}>
+      <h3 style={styles.cardTitle}>Feedbacks positifs</h3>
+    </div>
+
+    <FeedbackChart data={feedbackStats} />
+  </div>
+</div>
+<div style={styles.maeMapSection}>
+  <div style={styles.maeMapHeader}>
+    <div>
+      <h3 style={styles.cardTitle}>Réseau MAE Assurances</h3>
+      <p style={styles.mapSubtitle}>Agences réparties partout en Tunisie</p>
+    </div>
+
+    <span style={styles.mapBadge}>47 agences</span>
+  </div>
+
+  <div style={styles.maeMapContent}>
+    <div style={styles.mapBoxLarge}>
+      <AgenciesMap />
+    </div>
+
+   <div style={styles.mapStatsPanel}>
+  {/* KPI */}
+  <div style={styles.mapKpiGrid}>
+    <div style={styles.mapKpiBox}>
+      <strong style={styles.mapKpiValue}>47</strong>
+      <span style={styles.mapKpiLabel}>Agences</span>
+    </div>
+
+    <div style={styles.mapKpiBox}>
+      <strong style={styles.mapKpiValue}>6</strong>
+      <span style={styles.mapKpiLabel}>Régions</span>
+    </div>
+
+    <div style={styles.mapKpiBox}>
+      <strong style={styles.mapKpiValue}>9</strong>
+      <span style={styles.mapKpiLabel}>Max région</span>
+    </div>
+  </div>
+
+  {/* Bars */}
+  <div style={styles.regionBars}>
+    {[
+      ["Tunis & Grand Tunis", 9],
+      ["Cap Bon / Sahel", 5],
+      ["Nord / Nord-Ouest", 4],
+      ["Centre", 3],
+      ["Sud / Sud-Ouest", 3],
+      ["Sud / Sud-Est", 3],
+    ].map(([label, value]) => (
+      <div key={label} style={styles.regionBarItem}>
+        <div style={styles.regionBarTop}>
+          <span>{label}</span>
+          <b>{value}</b>
+        </div>
+
+        <div style={styles.regionBarTrack}>
+          <div
+            style={{
+              ...styles.regionBarFill,
+              width: `${(value / 9) * 100}%`,
+            }}
+          />
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+  </div>
+</div>
+{/* après maeMapSection */}
+{user?.role === "ADMIN" && (
+  <div style={styles.extraChartsGrid}>
+    <div style={styles.chartCard}>
+      <h3 style={styles.cardTitle}>Évolution des réclamations</h3>
+      <EvolutionChart data={complaints} styles={styles} />
+    </div>
+
+    <div style={styles.chartCard}>
+      <h3 style={styles.cardTitle}>Temps de traitement</h3>
+      <ProcessingTimeChart data={complaints} />
+    </div>
+  </div>
+)}
+<div style={styles.extraChartsGrid}>
+  
+</div>
 <div style={styles.tabs}>
   <button
     style={{
@@ -878,21 +986,41 @@ function AgentCategoryGauge({ data, user }) {
 }
 
 function CompactFilter({ label, value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div style={styles.compactFilter}>
+    <div style={styles.customFilter}>
       <span style={styles.compactLabel}>{label}</span>
 
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={styles.compactSelect}
+      <button
+        type="button"
+        style={styles.customSelectButton}
+        onClick={() => setOpen(!open)}
       >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {formatStatus(option)}
-          </option>
-        ))}
-      </select>
+        <span>{formatStatus(value)}</span>
+        <span>⌄</span>
+      </button>
+
+      {open && (
+        <div style={styles.customSelectMenu}>
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              style={{
+                ...styles.customSelectOption,
+                ...(value === option ? styles.customSelectOptionActive : {}),
+              }}
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+              }}
+            >
+              {formatStatus(option)}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -994,18 +1122,18 @@ function ChannelRow({
 function parseDate(dateString) {
   if (!dateString) return null;
 
-  const parts = dateString.split("/");
+  // format: 28/04/2026 09:02:20
+  if (dateString.includes("/")) {
+    const [datePart, timePart = "00:00:00"] = dateString.split(" ");
+    const [day, month, year] = datePart.split("/");
 
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    const parsed = new Date(`${year}-${month}-${day}T00:00:00`);
+    const parsed = new Date(`${year}-${month}-${day}T${timePart}`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   const date = new Date(dateString);
   return Number.isNaN(date.getTime()) ? null : date;
 }
-
 function formatSource(source) {
   if (!source) return "Inconnu";
   if (source.toLowerCase() === "facebook") return "Facebook";
@@ -1060,7 +1188,7 @@ function CategoryBarChart({ data }) {
     </div>
   );
 }
-function GenderChart({ data }) {
+function GenderChart({ data, genderFilter, onSelectGender }) {
   const homme = data.find((item) => item.label === "Homme") || {
     value: 0,
     percent: 0,
@@ -1087,29 +1215,368 @@ function GenderChart({ data }) {
       
 
 <div style={styles.genderVisuals}>
-        <div style={styles.genderPerson}>
-          <div style={styles.personIconFemale}>♀</div>
-          <div style={styles.genderBadgeFemale}>{femme.percent}% Femme</div>
-          <p style={styles.genderSmallText}>{femme.value} réclamation(s)</p>
+  <div
+    style={{
+      ...styles.genderPerson,
+      ...(genderFilter === "Femme" ? styles.genderPersonActive : {}),
+    }}
+    onClick={() => onSelectGender("Femme")}
+  >
+    <div style={styles.personIconFemale}>♀</div>
+    <div style={styles.genderBadgeFemale}>{femme.percent}% Femme</div>
+    <p style={styles.genderSmallText}>{femme.value} réclamation(s)</p>
+  </div>
+
+  <div
+    style={{
+      ...styles.genderPerson,
+      ...(genderFilter === "Homme" ? styles.genderPersonActive : {}),
+    }}
+    onClick={() => onSelectGender("Homme")}
+  >
+    <div style={styles.personIconMale}>♂</div>
+    <div style={styles.genderBadgeMale}>{homme.percent}% Homme</div>
+    <p style={styles.genderSmallText}>{homme.value} réclamation(s)</p>
+  </div>
+</div>
+
+<div
+  style={{
+    ...styles.otherGenderBox,
+    ...(genderFilter === "Autre" ? styles.genderPersonActive : {}),
+  }}
+  onClick={() => onSelectGender("Autre")}
+>
+  <span style={styles.otherGenderDot}></span>
+  <span>Autre / inconnu</span>
+  <strong>{autre.percent}%</strong>
+  
+
+<small>{autre.value} réclamation(s)</small>
+</div>
+</div>
+);
+}
+const maeMarkerIcon = L.divIcon({
+  className: "mae-marker",
+  html: `<div class="mae-marker-pin"><span></span></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28],
+});
+function AgenciesMap() {
+  const agencyGroups = [
+    { region: "Tunis & Grand Tunis", count: 9, color: "#166534" },
+    { region: "Nord / Nord-Ouest", count: 4, color: "#3f8d69" },
+    { region: "Cap Bon / Sahel", count: 5, color: "#65b36f" },
+    { region: "Centre", count: 3, color: "#a9d798" },
+    { region: "Sud / Sud-Ouest", count: 3, color: "#e8be59" },
+    { region: "Sud / Sud-Est", count: 3, color: "#e97667" },
+  ];
+
+  const agencies = [
+    { name: "Tunis Centre", city: "Tunis", lat: 36.8065, lng: 10.1815 },
+    { name: "Bab Bnet", city: "Tunis", lat: 36.8077, lng: 10.1658 },
+    { name: "Jean Jaurès", city: "Tunis", lat: 36.8008, lng: 10.1825 },
+    { name: "Place Barcelone", city: "Tunis", lat: 36.7976, lng: 10.1803 },
+    { name: "Ariana", city: "Ariana", lat: 36.8625, lng: 10.1956 },
+    { name: "El Aouina", city: "El Aouina", lat: 36.8493, lng: 10.2566 },
+    { name: "Ben Arous", city: "Ben Arous", lat: 36.7531, lng: 10.2189 },
+    { name: "Manouba", city: "Manouba", lat: 36.8078, lng: 10.1011 },
+
+    { name: "Jendouba", city: "Jendouba", lat: 36.5011, lng: 8.7802 },
+    { name: "Béja", city: "Béja", lat: 36.7256, lng: 9.1817 },
+    { name: "Siliana", city: "Siliana", lat: 36.0849, lng: 9.3708 },
+    { name: "Bizerte", city: "Bizerte", lat: 37.2744, lng: 9.8739 },
+
+    { name: "Nabeul", city: "Nabeul", lat: 36.4513, lng: 10.7357 },
+    { name: "Hammamet", city: "Hammamet", lat: 36.4000, lng: 10.6167 },
+    { name: "Sousse", city: "Sousse", lat: 35.8256, lng: 10.6369 },
+    { name: "Monastir", city: "Monastir", lat: 35.7643, lng: 10.8113 },
+    { name: "Mahdia", city: "Mahdia", lat: 35.5047, lng: 11.0622 },
+
+    { name: "Kairouan", city: "Kairouan", lat: 35.6781, lng: 10.0963 },
+    { name: "Kasserine", city: "Kasserine", lat: 35.1676, lng: 8.8365 },
+    { name: "Sidi Bouzid", city: "Sidi Bouzid", lat: 35.0382, lng: 9.4849 },
+
+    { name: "Gafsa", city: "Gafsa", lat: 34.4250, lng: 8.7842 },
+    { name: "Tozeur", city: "Tozeur", lat: 33.9197, lng: 8.1335 },
+    { name: "Kébili", city: "Kébili", lat: 33.7044, lng: 8.9690 },
+
+    { name: "Gabès", city: "Gabès", lat: 33.8815, lng: 10.0982 },
+    { name: "Médenine", city: "Médenine", lat: 33.3549, lng: 10.5055 },
+    { name: "Tataouine", city: "Tataouine", lat: 32.9297, lng: 10.4518 },
+  ];
+
+  const totalAgencies = agencies.length;
+
+  return (
+    <div style={styles.agencyMapGrid}>
+      <div style={styles.agencyStatsBox}>
+        <div style={styles.agencyTotalCircle}>
+          <strong>{totalAgencies}</strong>
+          <span>Agences</span>
         </div>
 
-        
+        <ResponsiveContainer width="100%" height={230}>
+          <PieChart>
+            <Pie
+              data={agencyGroups}
+              dataKey="count"
+              nameKey="region"
+              innerRadius={62}
+              outerRadius={92}
+              paddingAngle={4}
+            >
+              {agencyGroups.map((item) => (
+                <Cell key={item.region} fill={item.color} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [`${value} agence(s)`, ""]} />
+          </PieChart>
+        </ResponsiveContainer>
 
-        <div style={styles.genderPerson}>
-          <div style={styles.personIconMale}>♂</div>
-          <div style={styles.genderBadgeMale}>{homme.percent}% Homme</div>
-          <p style={styles.genderSmallText}>{homme.value} réclamation(s)</p>
+        <div style={styles.agencyLegend}>
+          {agencyGroups.map((item) => (
+            <span key={item.region}>
+              <i style={{ background: item.color }}></i>
+              {item.region} ({item.count})
+            </span>
+          ))}
         </div>
       </div>
 
-      <div style={styles.otherGenderBox}>
-        <span style={styles.otherGenderDot}></span>
-        <span>Autre / inconnu</span>
-        <strong>{autre.percent}%</strong>
-        <small>{autre.value} réclamation(s)</small>
+      <div style={styles.mapBoxPro}>
+        <MapContainer
+          center={[34.8, 9.7]}
+          zoom={6}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%" }}
+        >
+         <TileLayer
+  attribution="&copy; OpenStreetMap &copy; CARTO"
+  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+/>
+
+          {agencies.map((agency) => (
+<Marker
+  key={agency.name}
+  position={[agency.lat, agency.lng]}
+  icon={maeMarkerIcon}
+>
+              <Popup>
+                <strong>{agency.name}</strong>
+                <br />
+                {agency.city}
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
       </div>
     </div>
   );
+}
+function EvolutionChart({ data , styles }) {
+  const evolutionData = useMemo(() => {
+    const counts = {};
+    const now = new Date();
+
+    const last30Days = new Date();
+    last30Days.setDate(now.getDate() - 30);
+
+   data.forEach((item) => {
+  const date = parseDate(item.comment_date);
+  if (!date) return;
+  if (date < last30Days) return;
+
+  const label = date.toISOString().split("T")[0];
+  counts[label] = (counts[label] || 0) + 1;
+});
+
+const evolutionData = Object.entries(counts)
+  .map(([date, value]) => ({ date, value }))
+  .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+return evolutionData;
+}, [data]);
+
+if (!evolutionData.length) {
+  return (
+    <div style={styles.emptyChartBox}>
+      <span>📊</span>
+      <p>Aucune réclamation enregistrée durant les 30 derniers jours.</p>
+    </div>
+  );
+}
+
+  const total = evolutionData.reduce((sum, item) => sum + item.value, 0);
+  const average = total / evolutionData.length;
+  const maxPoint = evolutionData.reduce(
+    (max, item) => (item.value > max.value ? item : max),
+    evolutionData[0]
+  );
+  const isHighPeak = maxPoint.value >= 5; // tu peux ajuster le seuil
+  return (
+    <div>
+      <div style={styles.evolutionSummary}>
+        <div style={styles.evolutionKpi}>
+          <strong>{total}</strong>
+          <span>Total 30 jours</span>
+        </div>
+
+        <div style={styles.evolutionKpi}>
+          <strong>{average.toFixed(1)}</strong>
+          <span>Moyenne / jour</span>
+        </div>
+
+        <div style={styles.evolutionKpiHighlight}>
+          <strong>{maxPoint.value}</strong>
+          <span>
+            Pic le{" "}
+            {new Date(maxPoint.date).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+            })}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ width: "100%", height: 280 }}>
+        <ResponsiveContainer>
+          <LineChart data={evolutionData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+
+            <XAxis
+              dataKey="date"
+              tickFormatter={(date) =>
+                new Date(date).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                })
+              }
+            />
+
+            <YAxis allowDecimals={false} />
+
+            <Tooltip
+              labelFormatter={(date) =>
+                new Date(date).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })
+              }
+              formatter={(value) => [`${value} réclamation(s)`, "Nombre"]}
+            />
+
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#166534"
+              strokeWidth={4}
+              dot={(props) => {
+                const { cx, cy, payload } = props;
+                const isMax = payload.date === maxPoint.date;
+
+                return (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isMax ? 7 : 4}
+                    fill={isMax ? "#e97667" : "#166534"}
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  />
+                );
+              }}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+                </ResponsiveContainer>
+      </div>
+
+      {isHighPeak && (
+        <div style={styles.alertBox}>
+          🔴 Pic élevé détecté : {maxPoint.value} réclamation(s) le{" "}
+          {new Date(maxPoint.date).toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        </div>
+      )}
+
+      <div style={styles.evolutionInsight}>
+        📌 Le pic des 30 derniers jours est de{" "}
+        <strong>{maxPoint.value} réclamation(s)</strong> enregistré le{" "}
+        <strong>
+          {new Date(maxPoint.date).toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "long",
+          })}
+        </strong>
+        .
+      </div>
+    </div>
+  );
+}
+      
+      
+  
+function ProcessingTimeChart({ data }) {
+  const chartData = useMemo(() => {
+    const buckets = {
+      "<1j": 0,
+      "1-3j": 0,
+      "3-7j": 0,
+      ">7j": 0,
+    };
+
+    data.forEach((item) => {
+     const created = new Date(item.opened_at);
+    const processed = new Date(item.processed_at);
+      if (!created || !processed) return;
+
+      const diffDays = Math.floor(
+        (processed - created) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diffDays < 1) buckets["<1j"]++;
+      else if (diffDays <= 3) buckets["1-3j"]++;
+      else if (diffDays <= 7) buckets["3-7j"]++;
+      else buckets[">7j"]++;
+    });
+console.log(
+  "TRAITEE ITEM =",
+  JSON.stringify(data.find((item) => item.status === "TRAITEE"), null, 2)
+);
+    return Object.entries(buckets).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }, [data]);
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
+if (total === 0) {
+  return (
+    <div style={styles.emptyChartBox}>
+      <span>⏱️</span>
+      <p>Aucune réclamation traitée pour calculer le temps de traitement.</p>
+    </div>
+  );
+}return (
+  <div style={{ width: "100%", height: 320, minHeight: 320 }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        <XAxis dataKey="name" />
+        <YAxis allowDecimals={false} />
+        <Tooltip cursor={{ fill: "transparent" }} />
+        <Bar dataKey="value" fill="#166534" radius={[8, 8, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
 }
 const styles = {
   page: {
@@ -1124,7 +1591,7 @@ const styles = {
     padding: "18px",
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
   },
-
+  
   filtersAll: {
     display: "flex",
     alignItems: "flex-end",
@@ -1151,12 +1618,47 @@ feedbackCenterLine: {
   background: "#cbd5e1",
   transform: "translateX(-50%)",
 },
+evolutionSummary: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: "12px",
+  marginBottom: "16px",
+},
+
+evolutionKpi: {
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "16px",
+  padding: "12px",
+  textAlign: "center",
+},
+
+evolutionKpiHighlight: {
+  background: "#f0fdf4",
+  border: "1px solid #bbf7d0",
+  borderRadius: "16px",
+  padding: "12px",
+  textAlign: "center",
+  color: "#166534",
+},
+
+evolutionInsight: {
+  marginTop: "12px",
+  padding: "12px 14px",
+  borderRadius: "14px",
+  background: "#f0fdf4",
+  border: "1px solid #bbf7d0",
+  color: "#166534",
+  fontSize: "13px",
+  fontWeight: "700",
+},
 smallChartCard: {
   background: "#ffffff",
   borderRadius: "24px",
-  padding: "24px",
+  padding: "22px",
   boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
-  minHeight: "190px",
+  minHeight: "auto",
+  height: "fit-content",
   overflow: "visible",
 },
 feedbackRow: {
@@ -1439,7 +1941,7 @@ genderTotalLabel: {
     borderRadius: "24px",
     padding: "24px",
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
-    minHeight: "310px",
+    minHeight: "360px",
     overflow: "visible",
   },
 
@@ -1539,14 +2041,13 @@ genderTotalLabel: {
     borderRadius: "50%",
   },
 
-  channelRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    marginBottom: "22px",
-    transition: "all 0.25s ease",
-  },
-
+channelRow: {
+  display: "flex",
+  alignItems: "center",
+  gap: "16px",
+  marginBottom: "14px",
+  transition: "all 0.25s ease",
+},
   channelLabelBox: {
     minWidth: "110px",
   },
@@ -1557,7 +2058,68 @@ genderTotalLabel: {
     alignItems: "center",
     gap: "12px",
   },
+  maeMapSection: {
+  background: "#ffffff",
+  borderRadius: "28px",
+  padding: "26px",
+  boxShadow: "0 16px 40px rgba(15, 23, 42, 0.07)",
+},
 
+maeMapHeader: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "20px",
+},
+
+mapSubtitle: {
+  margin: "6px 0 0",
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "600",
+},
+
+mapBadge: {
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "8px 16px",
+  borderRadius: "999px",
+  fontWeight: "800",
+},
+
+maeMapContent: {
+  display: "grid",
+  gridTemplateColumns: "1.7fr 0.8fr",
+  gap: "22px",
+},
+
+mapBoxLarge: {
+  height: "430px",
+  borderRadius: "24px",
+  overflow: "hidden",
+  border: "1px solid #dcfce7",
+  boxShadow: "inset 0 0 0 1px rgba(22,101,52,0.08)",
+},
+
+
+
+mapStatBig: {
+  textAlign: "center",
+  color: "#166534",
+},
+
+mapStatBigStrong: {
+  fontSize: "54px",
+  display: "block",
+},
+
+regionList: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  color: "#334155",
+  fontWeight: "700",
+},
   channelTrack: {
     flex: 1,
     height: "22px",
@@ -1578,7 +2140,10 @@ genderTotalLabel: {
   justifyContent: "center",
   gap: "20px",
 },
-
+genderPersonActive: {
+  transform: "translateY(-4px)",
+  filter: "drop-shadow(0 12px 22px rgba(22, 101, 52, 0.18))",
+},
 genderVisuals: {
   display: "grid",
   gridTemplateColumns: "1fr auto 1fr",
@@ -1591,6 +2156,8 @@ genderPerson: {
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
+  cursor: "pointer",
+  transition: "all 0.25s ease",
 },
 
 personIconFemale: {
@@ -1679,7 +2246,11 @@ feedbackMiniStats: {
   fontSize: "13px",
   fontWeight: "800",
 },
-
+extraChartsGrid: {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "18px",
+},
 goodDot: {
   display: "inline-block",
   width: "10px",
@@ -1780,7 +2351,19 @@ otherGenderDot: {
     fontWeight: "700",
     minWidth: "36px",
   },
-
+  emptyChartBox: {
+  height: "260px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "10px",
+  color: "#64748b",
+  fontWeight: "700",
+  background: "#f8fafc",
+  borderRadius: "18px",
+  border: "1px dashed #cbd5e1",
+},
   channelPercent: {
     color: "#6b87b6",
     fontWeight: "600",
@@ -1845,7 +2428,78 @@ calendarApplyBtn: {
     gap: "12px",
     marginBottom: "4px",
   },
+  customFilter: {
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+  minWidth: "180px",
+},
 
+customSelectButton: {
+  height: "46px",
+  borderRadius: "16px",
+  border: "1px solid #e2e8f0",
+  background: "#f8fafc",
+  padding: "0 14px",
+  color: "#0f172a",
+  fontSize: "14px",
+  fontWeight: "800",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  boxShadow: "0 6px 14px rgba(15, 23, 42, 0.04)",
+},
+
+customSelectMenu: {
+  position: "absolute",
+  top: "72px",
+  left: 0,
+  width: "100%",
+  zIndex: 2000,
+  background: "#ffffff",
+  border: "1px solid #e2e8f0",
+  borderRadius: "18px",
+  padding: "8px",
+  boxShadow: "0 18px 40px rgba(15, 23, 42, 0.16)",
+},
+
+customSelectOption: {
+  width: "100%",
+  border: "none",
+  background: "transparent",
+  padding: "11px 12px",
+  borderRadius: "12px",
+  textAlign: "left",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "700",
+  color: "#334155",
+},
+agencyTotalCircle: {
+  position: "absolute",
+  top: "96px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  textAlign: "center",
+  zIndex: 2,
+  color: "#166534",
+},
+
+agencyLegend: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "#334155",
+},
+
+customSelectOptionActive: {
+  background: "#ecfdf5",
+  color: "#166534",
+},
   tabButton: {
     padding: "8px 16px",
     borderRadius: "999px",
@@ -1856,7 +2510,13 @@ calendarApplyBtn: {
     fontWeight: "600",
     cursor: "pointer",
   },
-
+  mapBoxPro: {
+  height: "390px",
+  borderRadius: "24px",
+  overflow: "hidden",
+  border: "1px solid #dcfce7",
+  boxShadow: "inset 0 0 0 1px rgba(22,101,52,0.08)",
+},
   activeTab: {
     background: "#eff6ff",
     color: "#2563eb",
@@ -1869,6 +2529,8 @@ calendarApplyBtn: {
     padding: "22px",
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
     overflowX: "auto",
+    height: "100%",
+  minHeight: "350px"
   },
 
   paginationTop: {
@@ -1914,12 +2576,216 @@ genderHeader: {
   alignItems: "center",
   marginBottom: "12px",
 },
+maeMapSection: {
+  background: "#ffffff",
+  borderRadius: "28px",
+  padding: "26px",
+  marginTop: "24px",
+  boxShadow: "0 16px 40px rgba(15, 23, 42, 0.07)",
+  border: "1px solid #e2e8f0",
+},
 
+maeMapHeader: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "20px",
+},
+
+mapSubtitle: {
+  margin: "6px 0 0",
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "600",
+},
+
+mapBadge: {
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "8px 16px",
+  borderRadius: "999px",
+  fontWeight: "800",
+},
+
+maeMapContent: {
+  display: "grid",
+  gridTemplateColumns: "1.7fr 0.8fr",
+  gap: "22px",
+},
+
+mapBoxLarge: {
+  height: "430px",
+  borderRadius: "24px",
+  overflow: "hidden",
+  border: "1px solid #dcfce7",
+},
+
+mapStatBig: {
+  textAlign: "center",
+  color: "#166534",
+},
+
+mapStatBigStrong: {
+  fontSize: "54px",
+  display: "block",
+},
+
+regionList: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  color: "#334155",
+  fontWeight: "700",
+},
+
+
+maeMapHeader: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "20px",
+},
+
+mapSubtitle: {
+  margin: "6px 0 0",
+  color: "#64748b",
+  fontSize: "13px",
+  fontWeight: "600",
+},
+
+mapBadge: {
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "8px 16px",
+  borderRadius: "999px",
+  fontWeight: "800",
+},
+
+maeMapContent: {
+  display: "grid",
+  gridTemplateColumns: "1.7fr 0.8fr",
+  gap: "22px",
+},
+
+mapBoxLarge: {
+  height: "430px",
+  borderRadius: "24px",
+  overflow: "hidden",
+  border: "1px solid #dcfce7",
+},
+mapKpiGrid: {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: "12px",
+},
+
+mapKpiBox: {
+  background: "#ffffff",
+  border: "1px solid #dcfce7",
+  borderRadius: "16px",
+  padding: "14px",
+  textAlign: "center",
+},
+
+mapKpiValue: {
+  fontSize: "22px",
+  fontWeight: "900",
+  color: "#166534",
+  display: "block",
+},
+
+mapKpiLabel: {
+  fontSize: "12px",
+  color: "#64748b",
+  fontWeight: "600",
+},
+
+regionBars: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  marginTop: "18px",
+},
+
+regionBarItem: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+},
+
+regionBarTop: {
+  display: "flex",
+  justifyContent: "space-between",
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "#334155",
+},
+
+regionBarTrack: {
+  height: "8px",
+  background: "#e5e7eb",
+  borderRadius: "999px",
+  overflow: "hidden",
+},
+
+regionBarFill: {
+  height: "100%",
+  background: "linear-gradient(90deg, #166534, #22c55e)",
+  borderRadius: "999px",
+},
+mapStatsPanel: {
+  background: "linear-gradient(135deg, #f0fdf4, #ffffff)",
+  border: "1px solid #dcfce7",
+  borderRadius: "24px",
+  padding: "22px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  gap: "20px",
+},
+
+mapStatBig: {
+  textAlign: "center",
+  color: "#166534",
+},
+
+mapStatBigStrong: {
+  fontSize: "54px",
+  display: "block",
+},
+
+regionList: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  color: "#334155",
+  fontWeight: "700",
+},
 genderLabelBox: {
   display: "flex",
   alignItems: "center",
   gap: "8px",
 },
+
+  calendarWrapper: {
+    background: "#fff",
+    borderRadius: "20px",
+    padding: "12px",
+  },
+
+  dateInputs: {
+    display: "flex",
+    gap: "10px",
+    marginBottom: "10px",
+  },
+
+  dateInput: {
+    flex: 1,
+    padding: "10px",
+    borderRadius: "10px",
+    border: "1px solid #e2e8f0",
+    fontSize: "14px",
+  },
 
 genderDot: {
   width: "11px",
@@ -2014,7 +2880,25 @@ feedbackGaugeStats: {
     color: "#64748b",
     fontSize: "14px",
   },
-
+  mapCard: {
+  background: "#ffffff",
+  borderRadius: "28px",
+  padding: "26px",
+  boxShadow: "0 16px 38px rgba(15, 23, 42, 0.07)",
+},
+agencyMapGrid: {
+  display: "grid",
+  gridTemplateColumns: "0.9fr 1.4fr",
+  gap: "22px",
+  alignItems: "stretch",
+},
+mapBox: {
+  height: "360px",
+  width: "100%",
+  borderRadius: "20px",
+  overflow: "hidden",
+  border: "1px solid #e2e8f0",
+},
   errorText: {
     color: "#dc2626",
     fontWeight: "600",
@@ -2030,7 +2914,13 @@ feedbackGaugeStats: {
 feedbackMain: {
   textAlign: "center",
 },
-
+agencyStatsBox: {
+  borderRadius: "24px",
+  background: "linear-gradient(135deg, #f0fdf4, #ffffff)",
+  border: "1px solid #dcfce7",
+  padding: "20px",
+  position: "relative",
+},
 feedbackEmoji: {
   fontSize: "44px",
 },
@@ -2067,7 +2957,16 @@ feedbackFill: {
   background: "linear-gradient(90deg, #16a34a, #86efac)",
   borderRadius: "999px",
 },
-
+alertBox: {
+  marginTop: "10px",
+  padding: "12px 14px",
+  background: "#fef2f2",
+  border: "1px solid #fecaca",
+  borderRadius: "14px",
+  color: "#b91c1c",
+  fontSize: "13px",
+  fontWeight: "800",
+},
 feedbackFooter: {
   display: "flex",
   justifyContent: "space-between",
