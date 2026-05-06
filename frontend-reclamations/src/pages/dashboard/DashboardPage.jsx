@@ -1,8 +1,9 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import ComplaintTable from "../../components/complaints/ComplaintTable";
 import PageLoader from "../../components/common/PageLoader";
+import robotImg from "../../assets/robot.png";
 import {
   PieChart,
   Pie,
@@ -23,14 +24,28 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { getBotResponse } from "../../utils/chatbotLogic";
 import L from "leaflet";
+import { ThemeContext } from "../../context/ThemeContext";
 function DashboardPage() {
   const [startDate, setStartDate] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
   const [endDate, setEndDate] = useState("");
   const { user } = useContext(AuthContext);
   const [feedbackStats, setFeedbackStats] = useState(null);
+  const [platformUsers, setPlatformUsers] = useState([]);
   const [allComplaints, setAllComplaints] = useState([]);
+  const [showAiRobot, setShowAiRobot] = useState(true);
+const [chatOpen, setChatOpen] = useState(false);
+const [isBotTyping, setIsBotTyping] = useState(false);
+const chatBodyRef = useRef(null);
+const aiMessages = [
+  "💡 Tu veux gagner du temps avec l’IA ?",
+  "⚡ Clique sur moi pour t’aider.",
+];
+  const { theme } = useContext(ThemeContext);
+const isDark = theme === "dark";
+const [robotMessageIndex, setRobotMessageIndex] = useState(0);
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,6 +65,14 @@ const [range, setRange] = useState([
     key: "selection",
   },
 ]);
+const [messages, setMessages] = useState([
+  {
+    sender: "bot",
+    text: "👋 Bonjour ! Comment puis-je t’aider ?",
+  },
+]);
+
+const [chatInputValue, setChatInputValue] = useState("");
   const itemsPerPage = 16;
 
   const runWithLoader = (callback) => {
@@ -96,6 +119,13 @@ if (feedbackResponse.ok) {
   const feedbackData = await feedbackResponse.json();
   setFeedbackStats(feedbackData);
 }
+
+          const usersResponse = await fetch("http://127.0.0.1:8000/api/users/");
+
+          if (usersResponse.ok) {
+            const usersData = await usersResponse.json();
+            setPlatformUsers(Array.isArray(usersData) ? usersData : []);
+          }
         }
       } catch (err) {
         setError(err.message || "Une erreur est survenue");
@@ -261,7 +291,13 @@ if (feedbackResponse.ok) {
       enAttente: baseFilteredComplaints.filter((item) => item.status === "EN_ATTENTE").length,
     };
   }, [baseFilteredComplaints]);
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setRobotMessageIndex((prev) => (prev + 1) % aiMessages.length);
+  }, 3500);
 
+  return () => clearInterval(interval);
+}, []);
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -390,24 +426,159 @@ if (feedbackResponse.ok) {
       }))
       .sort((a, b) => b.value - a.value);
   }, [complaints]);
+  useEffect(() => {
+  if (chatBodyRef.current) {
+    chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+  }
+}, [messages, isBotTyping]);
+const sendMessage = () => {
+  if (!chatInputValue.trim()) return;
 
-  return (
+  const userText = chatInputValue;
+
+  // message user
+  setMessages((prev) => [
+    ...prev,
+    { sender: "user", text: userText },
+  ]);
+
+  setChatInputValue("");
+  setIsBotTyping(true);
+
+  // réponse bot intelligente
+  const botReply = getBotResponse(userText, {
+    stats,
+    categoryStats,
+    channelStats,
+    genderStats,
+    feedbackStats,
+    complaints,
+    userStats: {
+      total: platformUsers.length,
+      admins: platformUsers.filter((item) => item.role === "ADMIN").length,
+      agents: platformUsers.filter((item) => item.role === "AGENT").length,
+      active: platformUsers.filter((item) => item.is_active).length,
+    },
+    agencyStats: {
+      total: 26,
+      regions: [
+        { region: "Tunis & Grand Tunis", count: 9 },
+        { region: "Nord / Nord-Ouest", count: 4 },
+        { region: "Cap Bon / Sahel", count: 5 },
+        { region: "Centre", count: 3 },
+        { region: "Sud / Sud-Ouest", count: 3 },
+        { region: "Sud / Sud-Est", count: 3 },
+      ],
+    },
+  });
+
+  setTimeout(() => {
+    setIsBotTyping(false);
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: botReply },
+    ]);
+  }, 700);
+};
+  return (//return principal
+    
+      
     <div style={styles.page}>
+      {showAiRobot && (
+  <div style={styles.robotContainer}>
+    <div style={{ position: "relative" }}>
+  <div style={styles.robotBubble}>
+    {aiMessages[robotMessageIndex]}
+  </div>
+  <div style={styles.robotBubbleArrow}></div>
+</div>
+
+    <img
+      src={robotImg}
+      alt="MAE Robot"
+      style={styles.robotImage}
+      onClick={() => setChatOpen(true)}
+    />
+
+    <button
+      type="button"
+      style={styles.robotClose}
+      onClick={() => setShowAiRobot(false)}
+    >
+      ×
+    </button>
+  </div>
+)}
+
+{chatOpen && (
+  <div style={{ ...styles.chatBox, ...(isDark ? styles.darkChatBox : {}) }}>
+    <div style={styles.chatHeader}>
+      <span>🤖 Assistant IA MAE</span>
+
+      <button
+        type="button"
+        style={styles.chatClose}
+        onClick={() => setChatOpen(false)}
+      >
+        ×
+      </button>
+    </div>
+
+<div style={{ ...styles.chatBody, ...(isDark ? styles.darkChatBody : {}) }} ref={chatBodyRef}>
+    {messages.map((msg, index) => (
+    <div
+      key={index}
+      style={
+        msg.sender === "bot"
+          ? { ...styles.botMessage, ...(isDark ? styles.darkBotMessage : {}) }
+          : styles.userMessage
+      }
+    >
+      {msg.text}
+    </div>
+  ))}
+  {isBotTyping && (
+  <div style={{ ...styles.typingMessage, ...(isDark ? styles.darkTypingMessage : {}) }}>
+    <span style={{ ...styles.typingDot, ...(isDark ? styles.darkTypingDot : {}) }}></span>
+    <span style={{ ...styles.typingDot, ...(isDark ? styles.darkTypingDot : {}) }}></span>
+    <span style={{ ...styles.typingDot, ...(isDark ? styles.darkTypingDot : {}) }}></span>
+  </div>
+)}
+</div>
+
+   <div style={{ ...styles.chatInputBox, ...(isDark ? styles.darkChatInputBox : {}) }}>
+  <input
+    style={{ ...styles.chatInput, ...(isDark ? styles.darkChatInput : {}) }}
+    placeholder="Écris ton message..."
+    value={chatInputValue}
+    onChange={(e) => setChatInputValue(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") sendMessage();
+    }}
+  />
+
+  <button type="button" style={styles.chatSend} onClick={sendMessage}>
+    ➤
+  </button>
+</div>
+ </div>
+)}
       {pageLoading && <PageLoader />}
 
-      {loading && <p>Chargement...</p>}
+      {loading && <PageLoader />}
       {error && <p style={styles.errorText}>{error}</p>}
 
       {!loading && !error && (
         <>
-          <div style={styles.filtersBar}>
+          <div style={{ ...styles.filtersBar, ...(isDark ? styles.darkCard : {}) }}>
             <div style={styles.filtersAll}>
              <div style={styles.dateRangeWrapper}>
   <span style={styles.compactLabel}>Période</span>
 
   <button
     type="button"
-    style={styles.dateRangeButton}
+    style={{ ...styles.dateRangeButton, ...(isDark ? styles.darkControl : {}) }}
     onClick={() => setShowCalendar(!showCalendar)}
   >
     {startDate && endDate
@@ -417,8 +588,8 @@ if (feedbackResponse.ok) {
   </button>
 
  {showCalendar && (
-  <div style={styles.calendarDropdown}>
-  <div style={styles.calendarWrapper}>
+  <div style={{ ...styles.calendarDropdown, ...(isDark ? styles.darkDropdown : {}) }}>
+  <div style={{ ...styles.calendarWrapper, ...(isDark ? styles.darkCalendarWrapper : {}) }}>
   
   {/* Inputs */}
  
@@ -464,18 +635,18 @@ if (feedbackResponse.ok) {
 
              
 
-              <div style={styles.searchWrap}>
+              <div style={{ ...styles.searchWrap, ...(isDark ? styles.darkSearchWrap : {}) }}>
                 <span style={styles.searchIcon}>⌕</span>
                 <input
                   type="text"
                   placeholder="Rechercher une réclamation..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={styles.searchInputPro}
+                  style={{ ...styles.searchInputPro, ...(isDark ? styles.darkSearchInput : {}) }}
                 />
               </div>
 
-              <button style={styles.resetButtonPro} onClick={resetFilters}>
+              <button style={{ ...styles.resetButtonPro, ...(isDark ? styles.darkButtonControl : {}) }} onClick={resetFilters}>
                 <span style={styles.resetIcon}>↻</span>
                 Réinitialiser
               </button>
@@ -518,9 +689,9 @@ if (feedbackResponse.ok) {
 
        
 <div style={styles.chartsGrid}>
-  <div style={styles.chartCard}>
+  <div style={{ ...styles.chartCard, ...(isDark ? styles.darkCard : {}) }}>
     <div style={styles.chartTitleRow}>
-      <h3 style={styles.cardTitle}>Réclamations par Catégorie</h3>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Réclamations par Catégorie</h3>
 
       {categoryFilter !== "Toutes" && (
         <button
@@ -547,9 +718,9 @@ if (feedbackResponse.ok) {
     )}
   </div>
 
-  <div style={styles.fullWidthChartCard}>
+  <div style={{ ...styles.fullWidthChartCard, ...(isDark ? styles.darkCard : {}) }}>
     <div style={styles.chartTitleRow}>
-      <h3 style={styles.cardTitle}>Répartition par Sexe</h3>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Répartition par Sexe</h3>
     </div>
 
     <GenderChart
@@ -561,9 +732,9 @@ if (feedbackResponse.ok) {
     />
   </div>
 
-  <div style={styles.smallChartCard}>
+  <div style={{ ...styles.smallChartCard, ...(isDark ? styles.darkCard : {}) }}>
     <div style={styles.chartTitleRow}>
-      <h3 style={styles.cardTitle}>Répartition par Canal</h3>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Répartition par Canal</h3>
 
       {channelFilter !== "Tous" && (
         <button
@@ -597,19 +768,20 @@ if (feedbackResponse.ok) {
     )}
   </div>
 
-  <div style={styles.chartCard}>
+  <div style={{ ...styles.chartCard, ...(isDark ? styles.darkCard : {}) }}>
     <div style={styles.chartTitleRow}>
-      <h3 style={styles.cardTitle}>Feedbacks positifs</h3>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Feedbacks positifs</h3>
     </div>
 
     <FeedbackChart data={feedbackStats} />
   </div>
 </div>
-<div style={styles.maeMapSection}>
+<div style={{ ...styles.maeMapSection, ...(isDark ? styles.darkCard : {}) }}>
   <div style={styles.maeMapHeader}>
     <div>
-      <h3 style={styles.cardTitle}>Réseau MAE Assurances</h3>
-      <p style={styles.mapSubtitle}>Agences réparties partout en Tunisie</p>
+      
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Agences réparties partout en Tunisie</h3>
+      
     </div>
 
     <span style={styles.mapBadge}>47 agences</span>
@@ -672,13 +844,15 @@ if (feedbackResponse.ok) {
 {/* après maeMapSection */}
 {user?.role === "ADMIN" && (
   <div style={styles.extraChartsGrid}>
-    <div style={styles.chartCard}>
-      <h3 style={styles.cardTitle}>Évolution des réclamations</h3>
+    <div style={{ ...styles.chartCard, ...(isDark ? styles.darkCard : {}) }}>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Évolution des réclamations</h3>
+      
       <EvolutionChart data={complaints} styles={styles} />
     </div>
 
-    <div style={styles.chartCard}>
-      <h3 style={styles.cardTitle}>Temps de traitement</h3>
+    <div style={{ ...styles.chartCard, ...(isDark ? styles.darkCard : {}) }}>
+      <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Temps de traitement</h3>
+      
       <ProcessingTimeChart data={complaints} />
     </div>
   </div>
@@ -717,7 +891,7 @@ if (feedbackResponse.ok) {
     Classées ({tabCounts.classees})
   </button>
 </div>
-          <div style={styles.card}>
+          <div style={{ ...styles.card, ...(isDark ? styles.darkCard : {}) }}>
             <div style={styles.paginationTop}>
               <div style={styles.paginationRight}>
                 <button
@@ -756,7 +930,10 @@ if (feedbackResponse.ok) {
   );
 }
 function FeedbackChart({ data }) {
-  if (!data) return <p style={styles.emptyText}>Chargement...</p>;
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+
+  if (!data) return <PageLoader />;
 
   const total = data.total || 1;
   const goodPercent = Math.round((data.good_feedbacks / total) * 100);
@@ -786,6 +963,9 @@ function FeedbackChart({ data }) {
   };
 
   const needle = getPoint(goodPercent, needleLength);
+  const needleColor = isDark ? "#f8fafc" : "#0f172a";
+  const needleCenterColor = isDark ? "#f8fafc" : "#0f172a";
+  const needleInnerColor = isDark ? "#0f172a" : "#ffffff";
 
   const status =
     goodPercent >= 70
@@ -834,13 +1014,13 @@ function FeedbackChart({ data }) {
           y1={cy}
           x2={needle.x}
           y2={needle.y}
-          stroke="#0f172a"
+          stroke={needleColor}
           strokeWidth="7"
           strokeLinecap="round"
         />
 
-        <circle cx={cx} cy={cy} r="16" fill="#0f172a" />
-        <circle cx={cx} cy={cy} r="6" fill="#ffffff" />
+        <circle cx={cx} cy={cy} r="16" fill={needleCenterColor} />
+        <circle cx={cx} cy={cy} r="6" fill={needleInnerColor} />
 
         <text x="60" y="205" textAnchor="middle" style={styles.gaugeText}>
           0%
@@ -987,14 +1167,16 @@ function AgentCategoryGauge({ data, user }) {
 
 function CompactFilter({ label, value, onChange, options }) {
   const [open, setOpen] = useState(false);
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
 
   return (
     <div style={styles.customFilter}>
-      <span style={styles.compactLabel}>{label}</span>
+      <span style={{ ...styles.compactLabel, ...(isDark ? styles.darkMutedText : {}) }}>{label}</span>
 
       <button
         type="button"
-        style={styles.customSelectButton}
+        style={{ ...styles.customSelectButton, ...(isDark ? styles.darkControl : {}) }}
         onClick={() => setOpen(!open)}
       >
         <span>{formatStatus(value)}</span>
@@ -1002,13 +1184,14 @@ function CompactFilter({ label, value, onChange, options }) {
       </button>
 
       {open && (
-        <div style={styles.customSelectMenu}>
+        <div style={{ ...styles.customSelectMenu, ...(isDark ? styles.darkDropdown : {}) }}>
           {options.map((option) => (
             <button
               key={option}
               type="button"
               style={{
                 ...styles.customSelectOption,
+                ...(isDark ? styles.darkDropdownOption : {}),
                 ...(value === option ? styles.customSelectOptionActive : {}),
               }}
               onClick={() => {
@@ -1026,11 +1209,15 @@ function CompactFilter({ label, value, onChange, options }) {
 }
 
 function StatCard({ title, value, color, active, onClick }) {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+
   return (
     <div
       onClick={onClick}
       style={{
         ...styles.statCard,
+        ...(isDark ? styles.darkStatCard : {}),
         ...(active ? styles.statCardActive : {}),
       }}
       title={`Filtrer par ${title}`}
@@ -1048,12 +1235,12 @@ function StatCard({ title, value, color, active, onClick }) {
         </div>
 
         <div>
-          <p style={styles.statTitle}>{title}</p>
-          <h2 style={styles.statValue}>{value}</h2>
+          <p style={{ ...styles.statTitle, ...(isDark ? styles.darkMutedText : {}) }}>{title}</p>
+          <h2 style={{ ...styles.statValue, ...(isDark ? styles.darkTitle : {}) }}>{value}</h2>
         </div>
       </div>
 
-      <div style={styles.progressTrack}>
+      <div style={{ ...styles.progressTrack, ...(isDark ? styles.darkProgressTrack : {}) }}>
         <div
           style={{
             ...styles.progressFill,
@@ -1309,32 +1496,35 @@ function AgenciesMap() {
   ];
 
   const totalAgencies = agencies.length;
+  const agencyBounds = agencies.map((agency) => [agency.lat, agency.lng]);
 
   return (
     <div style={styles.agencyMapGrid}>
       <div style={styles.agencyStatsBox}>
-        <div style={styles.agencyTotalCircle}>
-          <strong>{totalAgencies}</strong>
-          <span>Agences</span>
-        </div>
+        <div style={styles.agencyChartWrap}>
+          <div style={styles.agencyTotalCircle}>
+            <strong>{totalAgencies}</strong>
+            <span>Agences</span>
+          </div>
 
-        <ResponsiveContainer width="100%" height={230}>
-          <PieChart>
-            <Pie
-              data={agencyGroups}
-              dataKey="count"
-              nameKey="region"
-              innerRadius={62}
-              outerRadius={92}
-              paddingAngle={4}
-            >
-              {agencyGroups.map((item) => (
-                <Cell key={item.region} fill={item.color} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value) => [`${value} agence(s)`, ""]} />
-          </PieChart>
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={230}>
+            <PieChart>
+              <Pie
+                data={agencyGroups}
+                dataKey="count"
+                nameKey="region"
+                innerRadius={62}
+                outerRadius={92}
+                paddingAngle={4}
+              >
+                {agencyGroups.map((item) => (
+                  <Cell key={item.region} fill={item.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => [`${value} agence(s)`, ""]} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
         <div style={styles.agencyLegend}>
           {agencyGroups.map((item) => (
@@ -1348,8 +1538,8 @@ function AgenciesMap() {
 
       <div style={styles.mapBoxPro}>
         <MapContainer
-          center={[34.8, 9.7]}
-          zoom={6}
+          bounds={agencyBounds}
+          boundsOptions={{ padding: [24, 24] }}
           scrollWheelZoom={false}
           style={{ height: "100%", width: "100%" }}
         >
@@ -1955,7 +2145,7 @@ genderTotalLabel: {
   cardTitle: {
     margin: 0,
     fontSize: "18px",
-    color: "#24324a",
+    color: "#0f172a",
   },
 
   pieChartBox: {
@@ -1981,7 +2171,47 @@ genderTotalLabel: {
     alignItems: "center",
     justifyContent: "center",
   },
+  
 
+chatInputBox: {
+  height: "70px",
+  display: "flex",
+  alignItems: "center",
+  padding: "12px",
+  borderTop: "1px solid #e5e7eb",
+  background: "#ffffff",
+  gap: "10px",
+  boxSizing: "border-box",
+  flexShrink: 0,
+},
+
+chatInput: {
+  flex: 1,
+  height: "44px",
+  border: "1px solid #e2e8f0",
+  borderRadius: "999px",
+  padding: "0 16px",
+  outline: "none",
+  fontSize: "14px",
+  boxSizing: "border-box",
+},
+
+chatSend: {
+  width: "46px",
+  height: "46px",
+  minWidth: "46px",
+  borderRadius: "50%",
+  border: "none",
+  background: "#166534",
+  color: "#ffffff",
+  fontWeight: "900",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  position: "static", // ✅ important
+},
   semiChartCenter: {
     position: "absolute",
     top: "112px",
@@ -2086,7 +2316,9 @@ mapBadge: {
   borderRadius: "999px",
   fontWeight: "800",
 },
-
+darkTitle: {
+  color: "#f8fafc",
+},
 maeMapContent: {
   display: "grid",
   gridTemplateColumns: "1.7fr 0.8fr",
@@ -2435,7 +2667,199 @@ calendarApplyBtn: {
   gap: "6px",
   minWidth: "180px",
 },
+robotContainer: {
+  position: "fixed",
+  right: "28px",
+  bottom: "28px",
+  zIndex: 9998,
+  display: "flex",
+  flexDirection: "column", // ⬅️ IMPORTANT
+  alignItems: "flex-end",
+},
+robotBubbleArrow: {
+  position: "absolute",
+  bottom: "-6px",
+  right: "20px",
+  width: "12px",
+  height: "12px",
+  background: "#ffffff",
+  transform: "rotate(45deg)",
+},
+robotBubble: {
+  background: "#ffffff",
+  color: "#166534",
+  padding: "12px 16px",
+  borderRadius: "16px",
+  boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
+  fontSize: "13px",
+  fontWeight: "800",
+  maxWidth: "220px",
+  marginBottom: "10px", // ⬅️ espace au-dessus du robot
+  textAlign: "center",
+},
 
+robotImage: {
+  width: "140px",   // ⬅️ plus grand
+  height: "140px",
+  objectFit: "contain",
+  cursor: "pointer",
+  filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.25))",
+  animation: "robotFloat 2.8s ease-in-out infinite",
+},
+
+robotClose: {
+  position: "absolute",
+  top: "-8px",
+  right: "-8px",
+  width: "26px",
+  height: "26px",
+  borderRadius: "50%",
+  border: "none",
+  background: "#ef4444",
+  color: "#ffffff",
+  fontWeight: "900",
+  cursor: "pointer",
+},
+
+chatBox: {
+  position: "fixed",
+  bottom: "20px",
+  right: "20px",
+  width: "420px",   // ⬅️ plus large
+  height: "600px",  // ⬅️ plus haut
+  background: "#ffffff",
+  borderRadius: "22px",
+  boxShadow: "0 30px 80px rgba(0,0,0,0.35)",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  zIndex: 9999,
+},
+
+chatHeader: {
+  background: "linear-gradient(135deg, #166534, #22c55e)",
+  color: "#ffffff",
+  padding: "16px 18px",
+  fontWeight: "900",
+  fontSize: "17px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+},
+darkCard: {
+  background: "#0f172a",
+  border: "1px solid #1e293b",
+  boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
+},
+darkControl: {
+  background: "#111827",
+  border: "1px solid #334155",
+  color: "#f8fafc",
+  boxShadow: "none",
+},
+darkDropdown: {
+  background: "#111827",
+  border: "1px solid #334155",
+  boxShadow: "0 18px 40px rgba(0, 0, 0, 0.35)",
+},
+darkDropdownOption: {
+  color: "#e2e8f0",
+},
+darkSearchWrap: {
+  background: "#111827",
+  border: "1px solid #334155",
+},
+darkSearchInput: {
+  color: "#f8fafc",
+},
+darkButtonControl: {
+  background: "#111827",
+  border: "1px solid #334155",
+  color: "#e2e8f0",
+},
+darkCalendarWrapper: {
+  background: "#111827",
+},
+darkChatBox: {
+  background: "#0f172a",
+  border: "1px solid #1e293b",
+  boxShadow: "0 30px 80px rgba(0, 0, 0, 0.5)",
+},
+darkChatBody: {
+  background: "#111827",
+},
+darkBotMessage: {
+  background: "#1f2937",
+  color: "#e2e8f0",
+  border: "1px solid #334155",
+},
+darkChatInputBox: {
+  background: "#0f172a",
+  borderTop: "1px solid #1f2937",
+},
+darkChatInput: {
+  background: "#111827",
+  border: "1px solid #334155",
+  color: "#f8fafc",
+},
+darkTypingMessage: {
+  background: "#1f2937",
+  border: "1px solid #334155",
+},
+darkTypingDot: {
+  background: "#86efac",
+},
+darkStatCard: {
+  background: "#111827",
+  border: "1px solid #1f2937",
+  boxShadow: "0 16px 36px rgba(0, 0, 0, 0.32)",
+},
+darkProgressTrack: {
+  background: "#1f2937",
+},
+chatClose: {
+  border: "none",
+  background: "rgba(255,255,255,0.2)",
+  color: "#ffffff",
+  width: "28px",
+  height: "28px",
+  borderRadius: "50%",
+  cursor: "pointer",
+  fontSize: "18px",
+  fontWeight: "900",
+},
+
+chatBody: {
+  flex: 1,
+  padding: "15px",
+  overflowY: "auto",
+  background: "#f8fafc",
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+},
+
+botMessage: {
+  alignSelf: "flex-start",
+  background: "#e2fbe8",
+  color: "#065f46",
+  padding: "12px 16px",
+  borderRadius: "16px",
+  maxWidth: "80%",
+  fontSize: "14px",
+  fontWeight: "700",
+},
+
+userMessage: {
+  alignSelf: "flex-end",
+  background: "#166534",
+  color: "#ffffff",
+  padding: "12px 16px",
+  borderRadius: "16px",
+  maxWidth: "80%",
+  fontSize: "14px",
+  fontWeight: "700",
+},
 customSelectButton: {
   height: "46px",
   borderRadius: "16px",
@@ -2479,12 +2903,17 @@ customSelectOption: {
 },
 agencyTotalCircle: {
   position: "absolute",
-  top: "96px",
+  top: "50%",
   left: "50%",
-  transform: "translateX(-50%)",
+  transform: "translate(-50%, -50%)",
   textAlign: "center",
   zIndex: 2,
   color: "#166534",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "2px",
+  pointerEvents: "none",
 },
 
 agencyLegend: {
@@ -2494,6 +2923,9 @@ agencyLegend: {
   fontSize: "13px",
   fontWeight: "700",
   color: "#334155",
+  width: "100%",
+  maxWidth: "320px",
+  margin: "0 auto",
 },
 
 customSelectOptionActive: {
@@ -2786,7 +3218,21 @@ genderLabelBox: {
     border: "1px solid #e2e8f0",
     fontSize: "14px",
   },
+darkText: {
+  color: "#f8fafc",
+},
 
+darkMutedText: {
+  color: "#cbd5e1",
+},
+
+darkTableText: {
+  color: "#e5e7eb",
+},
+
+darkTableRow: {
+  color: "#e5e7eb",
+},
 genderDot: {
   width: "11px",
   height: "11px",
@@ -2919,7 +3365,21 @@ agencyStatsBox: {
   background: "linear-gradient(135deg, #f0fdf4, #ffffff)",
   border: "1px solid #dcfce7",
   padding: "20px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "16px",
+},
+agencyChartWrap: {
+  width: "100%",
+  maxWidth: "320px",
+  height: "230px",
   position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  margin: "0 auto",
 },
 feedbackEmoji: {
   fontSize: "44px",
@@ -2966,6 +3426,21 @@ alertBox: {
   color: "#b91c1c",
   fontSize: "13px",
   fontWeight: "800",
+},
+typingMessage: {
+  alignSelf: "flex-start",
+  background: "#e2fbe8",
+  padding: "12px 16px",
+  borderRadius: "16px",
+  display: "flex",
+  gap: "5px",
+},
+
+typingDot: {
+  width: "7px",
+  height: "7px",
+  background: "#166534",
+  borderRadius: "50%",
 },
 feedbackFooter: {
   display: "flex",

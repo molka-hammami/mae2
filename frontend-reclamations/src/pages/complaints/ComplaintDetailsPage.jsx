@@ -1,12 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-
+import { ThemeContext } from "../../context/ThemeContext";
 function ComplaintDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-
+  const { theme } = useContext(ThemeContext);
+const isDark = theme === "dark";
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -219,10 +220,10 @@ function ComplaintDetailsPage() {
 
       <div style={styles.headerRow}>
         <div>
-          <h1 style={styles.title}>Détail de la réclamation</h1>
-          <p style={styles.subtitle}>
-            Consultez toutes les informations liées à cette réclamation.
-          </p>
+          <h1 style={{ ...styles.title, ...(isDark ? styles.darkTitle : {}) }}>Détail de la réclamation</h1>
+          
+          <p style={{ ...styles.subtitle, ...(isDark ? styles.darkMutedText : {}) }}>            Consultez toutes les informations liées à cette réclamation.
+</p>
         </div>
 
         <div style={styles.headerActions}>
@@ -244,10 +245,12 @@ function ComplaintDetailsPage() {
               iconCircleStyle={styles.facebookCircle}
               label="Source"
               value={complaint.source || "-"}
+              isDark={isDark}
             />
 
             <InfoCard
               icon="📅"
+              isDark={isDark}
               label="Date commentaire"
               value={complaint.comment_date || "-"}
             />
@@ -255,22 +258,25 @@ function ComplaintDetailsPage() {
             <InfoCard
               icon="🏷"
               label="Catégorie"
+              isDark={isDark}
               value={
                 <span
-                  style={
-                    isNotClassified
-                      ? styles.inlineCategoryNoClass
-                      : styles.inlineCategory
-                  }
-                >
-                  {isNotClassified ? "NON CLASSÉE" : complaint.category}
-                </span>
+  style={{
+    ...(isNotClassified
+      ? styles.inlineCategoryNoClass
+      : styles.inlineCategory),
+    ...(isDark ? styles.darkCategoryBadge : {}),
+  }}
+>
+  {isNotClassified ? "NON CLASSÉE" : complaint.category}
+</span>
               }
             />
 
             <InfoCard
               icon="⚠"
               label="Urgence"
+              isDark={isDark}
               value={
                 <span style={getUrgencyBadgeStyle(complaint.urgency)}>
                   {formatUrgency(complaint.urgency)}
@@ -281,6 +287,7 @@ function ComplaintDetailsPage() {
             <InfoCard
               icon="👤"
               label="Statut"
+              isDark={isDark}
               value={
                 <span style={getStatusBadgeStyle(complaint.status)}>
                   {formatStatus(complaint.status)}
@@ -291,43 +298,48 @@ function ComplaintDetailsPage() {
             <InfoCard
               icon="👤"
               label="Affecté à"
+              isDark={isDark}
               value={complaint.assigned_agent || "Non affecté"}
             />
 
             <InfoCard
               icon="🛡"
+              isDark={isDark}
               label="Classée par admin"
               value={complaint.category_assigned_by_admin ? "Oui" : "Non"}
             />
 
             <InfoCard
               icon="🗓"
+              isDark={isDark}
               label="Date ouverture"
               value={formatDateTime(complaint.opened_at)}
             />
 
             <InfoCard
               icon="🗓"
+              isDark={isDark}
               label="Date traitement"
               value={formatDateTime(complaint.processed_at)}
             />
 
             <InfoCard
               icon="🗓"
+              isDark={isDark}
               label="Date assignation catégorie"
               value={formatDateTime(complaint.category_assigned_at)}
             />
           </div>
 
           {isNotClassified && (
-            <div style={styles.sectionCard}>
-              <h2 style={styles.sectionTitle}>Classer la réclamation</h2>
+            <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
+              <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.darkTitle : {}) }}>Classer la réclamation</h2>
 
               <div style={styles.classifyRow}>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  style={styles.select}
+                  style={{ ...styles.select, ...(isDark ? styles.darkInput : {}) }}
                 >
                   <option value="">Choisir une catégorie</option>
                   {categories.map((category) => (
@@ -347,31 +359,31 @@ function ComplaintDetailsPage() {
             </div>
           )}
 
-          <div style={styles.sectionCard}>
+          <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
             <div style={styles.sectionHeaderWithIcon}>
               <span style={styles.sectionIcon}>📄</span>
-              <h2 style={styles.sectionTitleNoMargin}>
+              <h2 style={{ ...styles.sectionTitleNoMargin, ...(isDark ? styles.darkTitle : {}) }}>
                 Texte complet de la réclamation
               </h2>
             </div>
 
-            <div style={styles.textBox}>
+            <div style={{ ...styles.textBox, ...(isDark ? styles.darkTextBox : {}) }}>
               {complaint.text_original || "Aucun texte disponible."}
             </div>
           </div>
 
           <div style={styles.bottomNotesGrid}>
-            <div style={styles.sectionCard}>
+            <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
               <div style={styles.sectionHeaderWithIcon}>
                 <span style={styles.sectionIcon}>📝</span>
-                <h2 style={styles.sectionTitleNoMargin}>Note admin</h2>
+                <h2 style={{ ...styles.sectionTitleNoMargin, ...(isDark ? styles.darkTitle : {}) }}>Note admin</h2>
               </div>
 
               <textarea
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 placeholder="Écrire une note admin..."
-                style={styles.textarea}
+                style={{ ...styles.textarea, ...(isDark ? styles.darkTextarea : {}) }}
                 disabled={user?.role !== "ADMIN"}
               />
 
@@ -388,17 +400,17 @@ function ComplaintDetailsPage() {
               )}
             </div>
 
-            <div style={styles.sectionCard}>
+            <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
               <div style={styles.sectionHeaderWithIcon}>
                 <span style={styles.sectionIcon}>🔒</span>
-                <h2 style={styles.sectionTitleNoMargin}>Note interne</h2>
+                <h2 style={{ ...styles.sectionTitleNoMargin, ...(isDark ? styles.darkTitle : {}) }}>Note interne</h2>
               </div>
 
               <textarea
                 value={internalNote}
                 onChange={(e) => setInternalNote(e.target.value)}
                 placeholder="Écrire une note agent..."
-                style={styles.textarea}
+                style={{ ...styles.textarea, ...(isDark ? styles.darkTextarea : {}) }}
                 disabled={user?.role !== "AGENT"}
               />
 
@@ -418,8 +430,11 @@ function ComplaintDetailsPage() {
         </div>
 
         <div style={styles.rightColumn}>
-          <div style={styles.sideCard}>
-            <h3 style={styles.sideTitle}>Informations générales</h3>
+         <div style={{ ...styles.sideCard, ...(isDark ? styles.darkCard : {}) }}>
+          
+            <h3 style={{ ...styles.sideTitle, ...(isDark ? styles.darkTitle : {}) }}>
+  Informations générales
+</h3>
 
             <div style={styles.sideList}>
               <SideRow label="Créée le" value={complaint.comment_date || "-"} icon="📅" />
@@ -471,10 +486,13 @@ function ComplaintDetailsPage() {
               />
             </div>
           </div>
-
-          <div style={styles.sideCard}>
-            <h3 style={styles.sideTitle}>Historique</h3>
-
+<div style={{ ...styles.sideCard, ...(isDark ? styles.darkCard : {}) }}>
+  <h3 style={{ ...styles.sideTitle, ...(isDark ? styles.darkTitle : {}) }}>
+    Informations générales
+  </h3>
+  <h3 style={{ ...styles.sideTitle, ...(isDark ? styles.darkTitle : {}) }}>
+    Historique
+  </h3>
             <div style={styles.timeline}>
               {(complaint.action_logs || []).length > 0 ? (
                 complaint.action_logs.map((log) => (
@@ -484,10 +502,13 @@ function ComplaintDetailsPage() {
                     time={formatDateTime(log.created_at)}
                     badge={log.actor_name}
                     details={log.details}
+                    isDark={isDark}
                   />
                 ))
               ) : (
-                <p style={styles.message}>Aucune action enregistrée.</p>
+               <p style={{ ...styles.message, ...(isDark ? styles.darkMutedText : {}) }}>
+  Aucune action enregistrée.
+</p>
               )}
             </div>
           </div>
@@ -497,42 +518,63 @@ function ComplaintDetailsPage() {
   );
 }
 
-function InfoCard({ icon, label, value, iconCircleStyle }) {
+function InfoCard({ icon, label, value, iconCircleStyle, isDark }) {
   return (
-    <div style={styles.infoCard}>
+    <div style={{ ...styles.infoCard, ...(isDark ? styles.darkCard : {}) }}>
       <div style={styles.infoTop}>
         <div style={iconCircleStyle || styles.defaultIconCircle}>{icon}</div>
-        <span style={styles.infoLabel}>{label}</span>
+
+        <span style={{ ...styles.infoLabel, ...(isDark ? styles.darkMutedText : {}) }}>
+          {label}
+        </span>
       </div>
-      <div style={styles.infoValue}>{value || "-"}</div>
+
+      <div style={{ ...styles.infoValue, ...(isDark ? styles.darkText : {}) }}>
+        {value || "-"}
+      </div>
     </div>
   );
 }
 
-function SideRow({ icon, label, value }) {
+function SideRow({ icon, label, value, isDark }) {
   return (
     <div style={styles.sideRow}>
       <span style={styles.sideIcon}>{icon}</span>
-      <span style={styles.sideLabel}>{label}</span>
-      <span style={styles.sideValue}>{value}</span>
+
+      <span style={{ ...styles.sideLabel, ...(isDark ? styles.darkMutedText : {}) }}>
+        {label}
+      </span>
+
+      <span style={{ ...styles.sideValue, ...(isDark ? styles.darkText : {}) }}>
+        {value}
+      </span>
     </div>
   );
 }
 
-function TimelineItem({ title, time, badge, details }) {
+function TimelineItem({ title, time, badge, details, isDark }) {
   return (
     <div style={styles.timelineItem}>
       <div style={styles.timelineDot}></div>
 
       <div style={styles.timelineContent}>
         <div style={styles.timelineTitleRow}>
-          <span style={styles.timelineTitle}>{title}</span>
+          <span style={{ ...styles.timelineTitle, ...(isDark ? styles.darkText : {}) }}>
+            {title}
+          </span>
+
           {badge && <span style={styles.timelineBadge}>{badge}</span>}
         </div>
 
-        <div style={styles.timelineTime}>{time || "-"}</div>
+        <div style={{ ...styles.timelineTime, ...(isDark ? styles.darkMutedText : {}) }}>
+          {time || "-"}
+        </div>
 
-        {details && <div style={styles.timelineDetails}>{details}</div>}
+        {details && (
+          <div style={{ ...styles.timelineDetails, ...(isDark ? styles.darkMutedText : {}) }}>
+            {details}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -873,6 +915,12 @@ const styles = {
     outline: "none",
   },
 
+  darkInput: {
+    backgroundColor: "#111827",
+    border: "1px solid #334155",
+    color: "#f8fafc",
+  },
+
   classifyButton: {
     border: "none",
     borderRadius: "12px",
@@ -895,6 +943,12 @@ const styles = {
     whiteSpace: "pre-wrap",
   },
 
+  darkTextBox: {
+    backgroundColor: "#111827",
+    border: "1px solid #334155",
+    color: "#e2e8f0",
+  },
+
   bottomNotesGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -913,6 +967,12 @@ const styles = {
     resize: "vertical",
     boxSizing: "border-box",
     background: "#f8fafc",
+  },
+
+  darkTextarea: {
+    background: "#111827",
+    border: "1px solid #334155",
+    color: "#f8fafc",
   },
 
   noteActions: {
@@ -989,7 +1049,15 @@ const styles = {
     gap: "12px",
     alignItems: "flex-start",
   },
-
+  darkCategoryBadge: {
+  display: "inline-flex",
+  backgroundColor: "#dcfce7",
+  color: "#166534",
+  padding: "6px 12px",
+  borderRadius: "999px",
+  fontWeight: "800",
+  whiteSpace: "nowrap",
+},
   timelineDot: {
     width: "10px",
     height: "10px",
@@ -998,7 +1066,22 @@ const styles = {
     marginTop: "6px",
     flexShrink: 0,
   },
+  darkCard: {
+  backgroundColor: "#0f172a",
+  border: "1px solid #334155",
+},
 
+darkTitle: {
+  color: "#f8fafc",
+},
+
+darkText: {
+  color: "#f8fafc",
+},
+
+darkMutedText: {
+  color: "#cbd5e1",
+},
   timelineContent: {
     display: "flex",
     flexDirection: "column",
@@ -1011,7 +1094,23 @@ const styles = {
     gap: "10px",
     flexWrap: "wrap",
   },
+  darkCard: {
+  backgroundColor: "#0f172a",
+  border: "1px solid #334155",
+  boxShadow: "0 16px 40px rgba(0,0,0,0.35)",
+},
 
+darkTitle: {
+  color: "#f8fafc",
+},
+
+darkText: {
+  color: "#e5e7eb",
+},
+
+darkMutedText: {
+  color: "#cbd5e1",
+},
   timelineTitle: {
     fontSize: "15px",
     color: "#334155",

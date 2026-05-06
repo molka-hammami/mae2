@@ -69,21 +69,22 @@ function MenuLink({ to, icon, label }) {
 }
 
 const styles = {
-  sidebar: {
-    width: "270px",
-    minHeight: "100vh",
-    background: "#0b4f2f",
-    color: "#ffffff",
-    padding: "24px 18px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    flexShrink: 0,
-    position: "sticky",
-    top: 0,
-    boxSizing: "border-box",
-    borderRight: "1px solid rgba(255,255,255,0.08)",
-  },
+ sidebar: {
+  width: "270px",
+  minHeight: "100vh",
+  background: "#0f5a33",
+  color: "#ffffff",
+  padding: "24px 18px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  flexShrink: 0,
+  position: "sticky",
+  top: 0,
+  boxSizing: "border-box",
+  borderRight: "1px solid rgba(255,255,255,0.08)",
+  boxShadow: "2px 0 12px rgba(0,0,0,0.25)",
+},
 
   logoBlock: {
     display: "flex",

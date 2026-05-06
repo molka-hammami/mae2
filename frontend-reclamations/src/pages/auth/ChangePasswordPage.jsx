@@ -1,10 +1,13 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import { ThemeContext } from "../../context/ThemeContext";
 
 function ChangePasswordPage() {
   const { user, changePassword, logout } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const isDark = theme === "dark";
 
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -78,16 +81,18 @@ function ChangePasswordPage() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Premier accès</h1>
-        <p style={styles.subtitle}>
+    <div style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
+      <div style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
+        <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Premier accès</h1>
+        <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
           Bonjour {user.name}, vous devez changer votre mot de passe temporaire.
         </p>
 
-        <div style={styles.rulesBox}>
-          <p style={styles.rulesTitle}>Le mot de passe doit contenir :</p>
-          <ul style={styles.rulesList}>
+        <div style={{ ...styles.rulesBox, ...(isDark ? styles.rulesBoxDark : {}) }}>
+          <p style={{ ...styles.rulesTitle, ...(isDark ? styles.rulesTitleDark : {}) }}>
+            Le mot de passe doit contenir :
+          </p>
+          <ul style={{ ...styles.rulesList, ...(isDark ? styles.rulesListDark : {}) }}>
             <li>Au moins 8 caractères</li>
             <li>Une lettre majuscule</li>
             <li>Une lettre minuscule</li>
@@ -106,7 +111,7 @@ function ChangePasswordPage() {
             placeholder="Mot de passe actuel"
             value={formData.currentPassword}
             onChange={handleChange}
-            style={styles.input}
+            style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
           />
 
           <input
@@ -115,7 +120,7 @@ function ChangePasswordPage() {
             placeholder="Nouveau mot de passe"
             value={formData.newPassword}
             onChange={handleChange}
-            style={styles.input}
+            style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
           />
 
           <input
@@ -124,7 +129,7 @@ function ChangePasswordPage() {
             placeholder="Confirmer le nouveau mot de passe"
             value={formData.confirmPassword}
             onChange={handleChange}
-            style={styles.input}
+            style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
           />
 
           <button type="submit" style={styles.button}>
@@ -132,7 +137,7 @@ function ChangePasswordPage() {
           </button>
         </form>
 
-        <button onClick={logout} style={styles.logoutButton}>
+        <button onClick={logout} style={{ ...styles.logoutButton, ...(isDark ? styles.logoutButtonDark : {}) }}>
           Déconnexion
         </button>
       </div>
@@ -149,6 +154,9 @@ const styles = {
     background: "#f8fafc",
     padding: "20px",
   },
+  pageDark: {
+    background: "#0b1220",
+  },
   card: {
     width: "100%",
     maxWidth: "460px",
@@ -157,12 +165,20 @@ const styles = {
     borderRadius: "18px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
   },
+  cardDark: {
+    background: "#111827",
+    border: "1px solid #1f2937",
+    boxShadow: "0 20px 42px rgba(0,0,0,0.35)",
+  },
   title: {
     textAlign: "center",
     margin: "0 0 8px 0",
     color: "#166534",
     fontSize: "28px",
     fontWeight: "700",
+  },
+  titleDark: {
+    color: "#86efac",
   },
   subtitle: {
     textAlign: "center",
@@ -171,6 +187,9 @@ const styles = {
     fontSize: "15px",
     lineHeight: 1.5,
   },
+  subtitleDark: {
+    color: "#cbd5e1",
+  },
   rulesBox: {
     background: "#f0fdf4",
     border: "1px solid #bbf7d0",
@@ -178,11 +197,18 @@ const styles = {
     padding: "14px 16px",
     marginBottom: "18px",
   },
+  rulesBoxDark: {
+    background: "#0f1b17",
+    border: "1px solid #22543d",
+  },
   rulesTitle: {
     margin: "0 0 8px 0",
     color: "#166534",
     fontWeight: "700",
     fontSize: "14px",
+  },
+  rulesTitleDark: {
+    color: "#86efac",
   },
   rulesList: {
     margin: 0,
@@ -190,6 +216,9 @@ const styles = {
     color: "#166534",
     fontSize: "14px",
     lineHeight: 1.6,
+  },
+  rulesListDark: {
+    color: "#d1fae5",
   },
   form: {
     display: "flex",
@@ -202,6 +231,13 @@ const styles = {
     border: "1px solid #cbd5e1",
     fontSize: "14px",
     outline: "none",
+    background: "#ffffff",
+    color: "#0f172a",
+  },
+  inputDark: {
+    background: "#0f172a",
+    border: "1px solid #334155",
+    color: "#f8fafc",
   },
   button: {
     padding: "13px",
@@ -222,6 +258,11 @@ const styles = {
     background: "#ffffff",
     cursor: "pointer",
     fontWeight: "600",
+  },
+  logoutButtonDark: {
+    background: "#111827",
+    border: "1px solid #334155",
+    color: "#e2e8f0",
   },
   error: {
     color: "#dc2626",

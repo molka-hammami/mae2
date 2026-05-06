@@ -15,7 +15,7 @@ class AppUser(models.Model):
     ]
     
     name = models.CharField(max_length=150)
-
+    recovery_email = models.EmailField(blank=True, null=True)
     # Login automatique généré : exemple ranim@mae.tn
     email = models.EmailField(unique=True)
 

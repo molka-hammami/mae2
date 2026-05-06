@@ -32,6 +32,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             "assigned_category",
             "is_active",
             "recovery_email",
+            "recovery_email",
         ]
         extra_kwargs = {
             "password": {"write_only": True},

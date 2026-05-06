@@ -1,39 +1,132 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+import { ThemeContext } from "../../context/ThemeContext";
+
+function getStatusStyle(status) {
+  const base = {
+    padding: "8px 14px",
+    borderRadius: "20px",
+    fontWeight: "600",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+  };
+
+  switch (status) {
+    case "EN_ATTENTE":
+      return { ...base, backgroundColor: "#fee2e2", color: "#dc2626" };
+    case "EN_COURS":
+      return { ...base, backgroundColor: "#fef3c7", color: "#d97706" };
+    case "TRAITEE":
+    case "TRAITÉE":
+      return { ...base, backgroundColor: "#dcfce7", color: "#16a34a" };
+    default:
+      return { ...base, backgroundColor: "#e5e7eb", color: "#374151" };
+  }
+}
+
+function getUrgencyStyle(urgency) {
+  const base = {
+    padding: "8px 14px",
+    borderRadius: "20px",
+    fontWeight: "600",
+    fontSize: "13px",
+    whiteSpace: "nowrap",
+  };
+
+  switch (urgency) {
+    case "elevee":
+      return { ...base, backgroundColor: "#fee2e2", color: "#dc2626" };
+    case "moyenne":
+      return { ...base, backgroundColor: "#fef3c7", color: "#d97706" };
+    case "faible":
+      return { ...base, backgroundColor: "#dcfce7", color: "#16a34a" };
+    default:
+      return { ...base, backgroundColor: "#e5e7eb", color: "#374151" };
+  }
+}
+
+function formatStatus(status) {
+  switch (status) {
+    case "EN_ATTENTE":
+      return "En attente";
+    case "EN_COURS":
+      return "En cours";
+    case "TRAITEE":
+    case "TRAITÉE":
+      return "Traitée";
+    default:
+      return status || "-";
+  }
+}
+
+function formatUrgency(urgency) {
+  switch (urgency) {
+    case "elevee":
+      return "Élevée";
+    case "moyenne":
+      return "Moyenne";
+    case "faible":
+      return "Faible";
+    default:
+      return urgency || "-";
+  }
+}
 
 function ComplaintTable({ data }) {
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
+
   if (!Array.isArray(data) || data.length === 0) {
-    return <p style={styles.empty}>Aucune réclamation disponible.</p>;
+    return (
+      <p style={{ ...styles.empty, ...(isDark ? styles.darkText : {}) }}>
+        Aucune réclamation disponible.
+      </p>
+    );
   }
 
   return (
     <table style={styles.table}>
       <thead>
         <tr>
-          <th style={styles.th}>ID</th>
-          <th style={styles.th}>Réclamation</th>
-          <th style={styles.th}>Catégorie</th>
-          <th style={styles.th}>Canal</th>
-          <th style={styles.th}>Date</th>
-          <th style={styles.th}>Statut</th>
-          <th style={styles.th}>Urgence</th>
-          <th style={styles.th}>Actions</th>
+          {[
+            "ID",
+            "Réclamation",
+            "Catégorie",
+            "Canal",
+            "Date",
+            "Statut",
+            "Urgence",
+            "Actions",
+          ].map((title) => (
+            <th
+              key={title}
+              style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}
+            >
+              {title}
+            </th>
+          ))}
         </tr>
       </thead>
 
       <tbody>
         {data.map((item) => (
           <tr key={item.id}>
-            <td style={styles.tdId}>
+            <td style={{ ...styles.tdId, ...(isDark ? styles.tdDark : {}) }}>
               #{String(item.comment_id ?? item.id).padStart(4, "0")}
             </td>
 
-            <td style={styles.tdText}>
-              <div style={styles.textClamp}>
+            <td style={{ ...styles.tdText, ...(isDark ? styles.tdDark : {}) }}>
+              <div
+                style={{
+                  ...styles.textClamp,
+                  ...(isDark ? styles.darkText : {}),
+                }}
+              >
                 {item.text_original || "-"}
               </div>
             </td>
 
-            <td style={styles.td}>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
               <span
                 style={
                   item.category
@@ -45,28 +138,34 @@ function ComplaintTable({ data }) {
               </span>
             </td>
 
-            <td style={styles.td}>
-              <span style={styles.channelBadge}>
-                {item.source || "-"}
-              </span>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+              <span style={styles.channelBadge}>{item.source || "-"}</span>
             </td>
 
-            <td style={styles.td}>{item.comment_date || "-"}</td>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+              {item.comment_date || "-"}
+            </td>
 
-            <td style={styles.td}>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
               <span style={getStatusStyle(item.status)}>
                 {formatStatus(item.status)}
               </span>
             </td>
 
-            <td style={styles.td}>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
               <span style={getUrgencyStyle(item.urgency)}>
                 {formatUrgency(item.urgency)}
               </span>
             </td>
 
-            <td style={styles.td}>
-              <Link to={`/complaints/${item.id}`} style={styles.viewButton}>
+            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+              <Link
+                to={`/complaints/${item.id}`}
+                style={{
+                  ...styles.viewButton,
+                  ...(isDark ? styles.viewButtonDark : {}),
+                }}
+              >
                 Voir
               </Link>
             </td>
@@ -77,102 +176,6 @@ function ComplaintTable({ data }) {
   );
 }
 
-function formatStatus(status) {
-  if (!status) return "-";
-
-  const map = {
-    EN_COURS: "En cours",
-    EN_ATTENTE: "En attente",
-    TRAITEE: "Traitée",
-    TRAITÉE: "Traitée",
-  };
-
-  return map[status] || status;
-}
-
-function formatUrgency(urgency) {
-  if (!urgency) return "-";
-
-  const map = {
-    elevee: "Élevée",
-    moyenne: "Moyenne",
-    faible: "Faible",
-  };
-
-  return map[urgency] || urgency;
-}
-
-function getStatusStyle(status) {
-  const base = {
-    ...styles.pill,
-    minWidth: "120px",
-    textAlign: "center",
-  };
-
-  switch (status) {
-    case "EN_COURS":
-      return {
-        ...base,
-        backgroundColor: "#ecd78b",
-        color: "#8a5a00",
-      };
-    case "EN_ATTENTE":
-      return {
-        ...base,
-        backgroundColor: "#f3d6d3",
-        color: "#d13f3f",
-      };
-    case "TRAITEE":
-    case "TRAITÉE":
-      return {
-        ...base,
-        backgroundColor: "#dff0df",
-        color: "#15803d",
-      };
-    default:
-      return {
-        ...base,
-        backgroundColor: "#e2e8f0",
-        color: "#475569",
-      };
-  }
-}
-
-function getUrgencyStyle(urgency) {
-  const base = {
-    ...styles.pill,
-    minWidth: "90px",
-    textAlign: "center",
-  };
-
-  switch (urgency) {
-    case "elevee":
-      return {
-        ...base,
-        backgroundColor: "#f3d6d3",
-        color: "#dc2626",
-      };
-    case "moyenne":
-      return {
-        ...base,
-        backgroundColor: "#fdf0c7",
-        color: "#b45309",
-      };
-    case "faible":
-      return {
-        ...base,
-        backgroundColor: "#dff0df",
-        color: "#15803d",
-      };
-    default:
-      return {
-        ...base,
-        backgroundColor: "#e2e8f0",
-        color: "#475569",
-      };
-  }
-}
-
 const styles = {
   table: {
     width: "100%",
@@ -180,6 +183,7 @@ const styles = {
     borderSpacing: 0,
     minWidth: "1100px",
   },
+
   th: {
     textAlign: "left",
     padding: "16px 14px",
@@ -189,6 +193,13 @@ const styles = {
     borderBottom: "1px solid #e2e8f0",
     backgroundColor: "#ffffff",
   },
+
+  thDark: {
+    backgroundColor: "#0f172a",
+    color: "#e5e7eb",
+    borderBottom: "1px solid #334155",
+  },
+
   td: {
     padding: "18px 14px",
     verticalAlign: "middle",
@@ -196,6 +207,7 @@ const styles = {
     color: "#1e293b",
     fontSize: "15px",
   },
+
   tdId: {
     padding: "18px 14px",
     borderBottom: "1px solid #eef2f7",
@@ -203,11 +215,18 @@ const styles = {
     fontWeight: "700",
     whiteSpace: "nowrap",
   },
+
   tdText: {
     padding: "18px 12px",
     borderBottom: "1px solid #eef2f7",
     maxWidth: "320px",
   },
+
+  tdDark: {
+    color: "#e5e7eb",
+    borderBottom: "1px solid #334155",
+  },
+
   textClamp: {
     overflow: "hidden",
     whiteSpace: "nowrap",
@@ -215,16 +234,11 @@ const styles = {
     fontSize: "13px",
     color: "#334155",
   },
-  pill: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "10px 18px",
-    borderRadius: "999px",
-    fontSize: "14px",
-    fontWeight: "600",
-    whiteSpace: "nowrap",
+
+  darkText: {
+    color: "#e5e7eb",
   },
+
   categoryBadge: {
     display: "inline-flex",
     alignItems: "center",
@@ -237,6 +251,7 @@ const styles = {
     fontSize: "13px",
     whiteSpace: "nowrap",
   },
+
   categoryBadgeNoClass: {
     display: "inline-flex",
     alignItems: "center",
@@ -249,6 +264,7 @@ const styles = {
     fontSize: "13px",
     whiteSpace: "nowrap",
   },
+
   channelBadge: {
     display: "inline-flex",
     alignItems: "center",
@@ -261,6 +277,7 @@ const styles = {
     fontSize: "14px",
     textTransform: "capitalize",
   },
+
   viewButton: {
     display: "inline-flex",
     alignItems: "center",
@@ -273,6 +290,13 @@ const styles = {
     fontWeight: "700",
     color: "#1e3a5f",
   },
+
+  viewButtonDark: {
+    backgroundColor: "#1e293b",
+    border: "1px solid #334155",
+    color: "#f8fafc",
+  },
+
   empty: {
     color: "#64748b",
     margin: 0,

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-
+import { useContext } from "react";
+import { ThemeContext } from "../../context/ThemeContext";
 const API_BASE = "http://127.0.0.1:8000/api";
 
 const CATEGORY_OPTIONS = [
@@ -31,7 +32,8 @@ function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
+  const { theme } = useContext(ThemeContext);
+const isDark = theme === "dark";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState(initialForm);
@@ -235,8 +237,11 @@ function UsersPage() {
     <div style={styles.page}>
       <div style={styles.header}>
         <div>
-          <h1 style={styles.title}>Gestion des utilisateurs</h1>
-          <p style={styles.subtitle}>
+         <h1 style={{ ...styles.title, ...(isDark ? styles.darkTitle : {}) }}>
+  Gestion des utilisateurs
+</h1>
+
+<p style={{ ...styles.subtitle, ...(isDark ? styles.darkMutedText : {}) }}>
             Créez, modifiez et supprimez les comptes agents.
           </p>
         </div>
@@ -249,35 +254,35 @@ function UsersPage() {
       {error && <div style={styles.errorBox}>{error}</div>}
       {success && <div style={styles.successBox}>{success}</div>}
 
-      <div style={styles.card}>
+      <div style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
         {loading ? (
-          <p style={styles.message}>Chargement des utilisateurs...</p>
+          <p style={{ ...styles.message, ...(isDark ? styles.messageDark : {}) }}>Chargement des utilisateurs...</p>
         ) : sortedUsers.length === 0 ? (
-          <p style={styles.message}>Aucun utilisateur disponible.</p>
+          <p style={{ ...styles.message, ...(isDark ? styles.messageDark : {}) }}>Aucun utilisateur disponible.</p>
         ) : (
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>ID</th>
-                <th style={styles.th}>Nom</th>
-                <th style={styles.th}>Login</th>
-                <th style={styles.th}>Email personnel</th>
-                <th style={styles.th}>Rôle</th>
-                <th style={styles.th}>Catégorie</th>
-                <th style={styles.th}>Statut</th>
-                <th style={styles.th}>Premier accès</th>
-                <th style={styles.th}>Actions</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>ID</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Nom</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Login</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Email personnel</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Rôle</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Catégorie</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Statut</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Premier accès</th>
+                <th style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {sortedUsers.map((user) => (
                 <tr key={user.id}>
-                  <td style={styles.td}>#{user.id}</td>
-                  <td style={styles.tdStrong}>{user.name}</td>
-                  <td style={styles.td}>{user.email}</td>
-                  <td style={styles.td}>{user.personal_email || "-"}</td>
-                  <td style={styles.td}>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>#{user.id}</td>
+                  <td style={{ ...styles.tdStrong, ...(isDark ? styles.tdStrongDark : {}) }}>{user.name}</td>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>{user.email}</td>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>{user.personal_email || "-"}</td>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                     <span
                       style={
                         user.role === "ADMIN"
@@ -288,8 +293,8 @@ function UsersPage() {
                       {user.role}
                     </span>
                   </td>
-                  <td style={styles.td}>{user.assigned_category || "-"}</td>
-                  <td style={styles.td}>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>{user.assigned_category || "-"}</td>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                     <span
                       style={
                         user.is_active
@@ -300,7 +305,7 @@ function UsersPage() {
                       {user.is_active ? "Actif" : "Inactif"}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                     <span
                       style={
                         user.must_change_password
@@ -311,7 +316,7 @@ function UsersPage() {
                       {user.must_change_password ? "Oui" : "Non"}
                     </span>
                   </td>
-                  <td style={styles.td}>
+                  <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
                     <div style={styles.actions}>
                       <button
                         style={styles.editButton}
@@ -339,9 +344,9 @@ function UsersPage() {
 
       {isModalOpen && (
         <div style={styles.overlay}>
-          <div style={styles.modal}>
+          <div style={{ ...styles.modal, ...(isDark ? styles.modalDark : {}) }}>
             <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>
+              <h2 style={{ ...styles.modalTitle, ...(isDark ? styles.modalTitleDark : {}) }}>
                 {editingUser ? "Modifier l'utilisateur" : "Créer un agent"}
               </h2>
 
@@ -352,25 +357,25 @@ function UsersPage() {
 
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Nom</label>
+                <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Nom</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  style={styles.input}
+                  style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                   placeholder="Nom complet"
                 />
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Email personnel</label>
+                <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Email personnel</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  style={styles.input}
+                  style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                   placeholder="ex: agent@gmail.com"
                 />
 
@@ -383,7 +388,7 @@ function UsersPage() {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>
+                <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>
                   {editingUser
                     ? "Nouveau mot de passe temporaire (optionnel)"
                     : "Mot de passe temporaire"}
@@ -393,19 +398,19 @@ function UsersPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  style={styles.input}
+                  style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                   placeholder="Ex: Agent123!"
                 />
               </div>
 
               <div style={styles.row}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Rôle</label>
+                  <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Rôle</label>
                   <select
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    style={styles.input}
+                    style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                   >
                     {ROLE_OPTIONS.map((role) => (
                       <option key={role} value={role}>
@@ -416,12 +421,12 @@ function UsersPage() {
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Catégorie assignée</label>
+                  <label style={{ ...styles.label, ...(isDark ? styles.labelDark : {}) }}>Catégorie assignée</label>
                   <select
                     name="assigned_category"
                     value={formData.assigned_category}
                     onChange={handleChange}
-                    style={styles.input}
+                    style={{ ...styles.input, ...(isDark ? styles.inputDark : {}) }}
                     disabled={formData.role !== "AGENT"}
                   >
                     <option value="">Choisir une catégorie</option>
@@ -434,7 +439,7 @@ function UsersPage() {
                 </div>
               </div>
 
-              <label style={styles.checkboxRow}>
+              <label style={{ ...styles.checkboxRow, ...(isDark ? styles.checkboxRowDark : {}) }}>
                 <input
                   type="checkbox"
                   name="is_active"
@@ -509,6 +514,12 @@ const styles = {
     overflowX: "auto",
   },
 
+  cardDark: {
+    background: "#111827",
+    border: "1px solid #1f2937",
+    boxShadow: "0 18px 42px rgba(0, 0, 0, 0.32)",
+  },
+
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -524,11 +535,21 @@ const styles = {
     fontWeight: "700",
   },
 
+  thDark: {
+    borderBottom: "1px solid #334155",
+    color: "#94a3b8",
+  },
+
   td: {
     padding: "16px 12px",
     borderBottom: "1px solid #eef2f7",
     color: "#1e293b",
     fontSize: "14px",
+  },
+
+  tdDark: {
+    borderBottom: "1px solid #1f2937",
+    color: "#e2e8f0",
   },
 
   tdStrong: {
@@ -537,6 +558,11 @@ const styles = {
     color: "#1e293b",
     fontSize: "14px",
     fontWeight: "700",
+  },
+
+  tdStrongDark: {
+    borderBottom: "1px solid #1f2937",
+    color: "#f8fafc",
   },
 
   actions: {
@@ -665,6 +691,12 @@ const styles = {
     padding: "24px",
   },
 
+  modalDark: {
+    background: "#111827",
+    border: "1px solid #1f2937",
+    boxShadow: "0 24px 52px rgba(0, 0, 0, 0.4)",
+  },
+
   modalHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -677,6 +709,10 @@ const styles = {
     margin: 0,
     fontSize: "22px",
     color: "#1e293b",
+  },
+
+  modalTitleDark: {
+    color: "#f8fafc",
   },
 
   closeButton: {
@@ -711,6 +747,10 @@ const styles = {
     color: "#334155",
   },
 
+  labelDark: {
+    color: "#cbd5e1",
+  },
+
   input: {
     height: "46px",
     borderRadius: "12px",
@@ -719,6 +759,13 @@ const styles = {
     fontSize: "14px",
     outline: "none",
     background: "#ffffff",
+    color: "#0f172a",
+  },
+
+  inputDark: {
+    background: "#0f172a",
+    border: "1px solid #334155",
+    color: "#f8fafc",
   },
 
   generatedLogin: {
@@ -734,6 +781,10 @@ const styles = {
     gap: "10px",
     color: "#334155",
     fontWeight: "600",
+  },
+
+  checkboxRowDark: {
+    color: "#cbd5e1",
   },
 
   modalActions: {
@@ -766,6 +817,17 @@ const styles = {
     color: "#64748b",
     fontSize: "15px",
   },
+
+  messageDark: {
+    color: "#cbd5e1",
+  },
+  darkTitle: {
+  color: "#f8fafc",
+},
+
+darkMutedText: {
+  color: "#cbd5e1",
+},
 };
 
 export default UsersPage;
