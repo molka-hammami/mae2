@@ -157,7 +157,7 @@ const styles = {
     borderRadius: "24px",
     padding: "22px",
     boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-    overflowX: "auto",
+    overflow: "visible",
   },
 
   topBar: {

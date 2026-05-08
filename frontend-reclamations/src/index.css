@@ -141,16 +141,3 @@ body.dark .rdrPprevButton i {
 body.dark .rdrNextButton i {
   border-color: transparent transparent transparent #f8fafc;
 }
-@keyframes robotFloat {
-  0% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-8px);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
-}

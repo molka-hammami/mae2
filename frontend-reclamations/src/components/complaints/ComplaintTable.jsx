@@ -85,7 +85,8 @@ function ComplaintTable({ data }) {
   }
 
   return (
-    <table style={styles.table}>
+    <div style={styles.tableViewport}>
+      <table style={styles.table}>
       <thead>
         <tr>
           {[
@@ -172,11 +173,20 @@ function ComplaintTable({ data }) {
           </tr>
         ))}
       </tbody>
-    </table>
+      </table>
+    </div>
   );
 }
 
 const styles = {
+  tableViewport: {
+    overflow: "auto",
+    maxWidth: "100%",
+    maxHeight: "calc(100vh - 250px)",
+    position: "relative",
+    borderRadius: "0 0 18px 18px",
+  },
+
   table: {
     width: "100%",
     borderCollapse: "separate",
@@ -185,6 +195,9 @@ const styles = {
   },
 
   th: {
+    position: "sticky",
+    top: 0,
+    zIndex: 5,
     textAlign: "left",
     padding: "16px 14px",
     fontSize: "15px",
@@ -192,12 +205,14 @@ const styles = {
     fontWeight: "700",
     borderBottom: "1px solid #e2e8f0",
     backgroundColor: "#ffffff",
+    boxShadow: "0 1px 0 #e2e8f0",
   },
 
   thDark: {
     backgroundColor: "#0f172a",
     color: "#e5e7eb",
     borderBottom: "1px solid #334155",
+    boxShadow: "0 1px 0 #334155",
   },
 
   td: {

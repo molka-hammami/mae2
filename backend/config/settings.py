@@ -107,7 +107,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "mae.assurances.platform@gmail.com"
-EMAIL_HOST_PASSWORD = "rsvt kxcc vrsa kokc"
+EMAIL_HOST_USER = "molkahammami725@gmail.com"
+EMAIL_HOST_PASSWORD = "fwbu gbzt sfeb wozc"
 
-DEFAULT_FROM_EMAIL = "MAE Assurances <mae.assurances.platform@gmail.com>"
+DEFAULT_FROM_EMAIL = "MAE Assurances <molkahammami725@gmail.com>"
