@@ -6,6 +6,8 @@ import {
   FiBarChart2,
   FiCheckCircle,
   FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
   FiClipboard,
   FiRefreshCw,
@@ -1567,7 +1569,7 @@ function DashboardPage() {
 
                 >
 
-                  ?
+                  <FiChevronLeft />
 
                 </button>
 
@@ -1597,7 +1599,7 @@ function DashboardPage() {
 
                 >
 
-                  ?
+                  <FiChevronRight />
 
                 </button>
 
