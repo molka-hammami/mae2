@@ -4,10 +4,10 @@ import { ThemeContext } from "../../context/ThemeContext";
 
 function getStatusStyle(status) {
   const base = {
-    padding: "8px 14px",
-    borderRadius: "20px",
-    fontWeight: "600",
-    fontSize: "13px",
+    padding: "7px 12px",
+    borderRadius: "999px",
+    fontWeight: "700",
+    fontSize: "12px",
     whiteSpace: "nowrap",
   };
 
@@ -26,10 +26,10 @@ function getStatusStyle(status) {
 
 function getUrgencyStyle(urgency) {
   const base = {
-    padding: "8px 14px",
-    borderRadius: "20px",
-    fontWeight: "600",
-    fontSize: "13px",
+    padding: "7px 12px",
+    borderRadius: "999px",
+    fontWeight: "700",
+    fontSize: "12px",
     whiteSpace: "nowrap",
   };
 
@@ -85,94 +85,73 @@ function ComplaintTable({ data }) {
   }
 
   return (
-    <div style={styles.tableViewport}>
+    <div style={{ ...styles.tableViewport, ...(isDark ? styles.tableViewportDark : {}) }}>
       <table style={styles.table}>
-      <thead>
-        <tr>
-          {[
-            "ID",
-            "Réclamation",
-            "Catégorie",
-            "Canal",
-            "Date",
-            "Statut",
-            "Urgence",
-            "Actions",
-          ].map((title) => (
-            <th
-              key={title}
-              style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}
-            >
-              {title}
-            </th>
-          ))}
-        </tr>
-      </thead>
-
-      <tbody>
-        {data.map((item) => (
-          <tr key={item.id}>
-            <td style={{ ...styles.tdId, ...(isDark ? styles.tdDark : {}) }}>
-              #{String(item.comment_id ?? item.id).padStart(4, "0")}
-            </td>
-
-            <td style={{ ...styles.tdText, ...(isDark ? styles.tdDark : {}) }}>
-              <div
-                style={{
-                  ...styles.textClamp,
-                  ...(isDark ? styles.darkText : {}),
-                }}
-              >
-                {item.text_original || "-"}
-              </div>
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              <span
-                style={
-                  item.category
-                    ? styles.categoryBadge
-                    : styles.categoryBadgeNoClass
-                }
-              >
-                {item.category ? item.category : "NON CLASSÉE"}
-              </span>
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              <span style={styles.channelBadge}>{item.source || "-"}</span>
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              {item.comment_date || "-"}
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              <span style={getStatusStyle(item.status)}>
-                {formatStatus(item.status)}
-              </span>
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              <span style={getUrgencyStyle(item.urgency)}>
-                {formatUrgency(item.urgency)}
-              </span>
-            </td>
-
-            <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
-              <Link
-                to={`/complaints/${item.id}`}
-                style={{
-                  ...styles.viewButton,
-                  ...(isDark ? styles.viewButtonDark : {}),
-                }}
-              >
-                Voir
-              </Link>
-            </td>
+        <thead>
+          <tr>
+            {[
+              "ID",
+              "Réclamation",
+              "Catégorie",
+              "Canal",
+              "Date",
+              "Statut",
+              "Urgence",
+              "Actions",
+            ].map((title) => (
+              <th key={title} style={{ ...styles.th, ...(isDark ? styles.thDark : {}) }}>
+                {title}
+              </th>
+            ))}
           </tr>
-        ))}
-      </tbody>
+        </thead>
+
+        <tbody>
+          {data.map((item) => (
+            <tr key={item.id}>
+              <td style={{ ...styles.tdId, ...(isDark ? styles.tdDark : {}) }}>
+                #{String(item.comment_id ?? item.id).padStart(4, "0")}
+              </td>
+
+              <td style={{ ...styles.tdText, ...(isDark ? styles.tdDark : {}) }}>
+                <div style={{ ...styles.textClamp, ...(isDark ? styles.darkText : {}) }}>
+                  {item.text_original || "-"}
+                </div>
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                <span style={item.category ? styles.categoryBadge : styles.categoryBadgeNoClass}>
+                  {item.category ? item.category : "NON CLASSÉE"}
+                </span>
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                <span style={styles.channelBadge}>{item.source || "-"}</span>
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                {item.comment_date || "-"}
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                <span style={getStatusStyle(item.status)}>{formatStatus(item.status)}</span>
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                <span style={getUrgencyStyle(item.urgency)}>{formatUrgency(item.urgency)}</span>
+              </td>
+
+              <td style={{ ...styles.td, ...(isDark ? styles.tdDark : {}) }}>
+                <Link
+                  to={`/complaints/${item.id}`}
+                  style={{ ...styles.viewButton, ...(isDark ? styles.viewButtonDark : {}) }}
+                >
+                  Voir
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     </div>
   );
@@ -184,64 +163,60 @@ const styles = {
     maxWidth: "100%",
     maxHeight: "calc(100vh - 250px)",
     position: "relative",
-    borderRadius: "0 0 18px 18px",
+    borderRadius: "14px",
+    border: "1px solid #e2e8f0",
   },
-
+  tableViewportDark: {
+    border: "1px solid #334155",
+  },
   table: {
     width: "100%",
     borderCollapse: "separate",
     borderSpacing: 0,
     minWidth: "1100px",
   },
-
   th: {
     position: "sticky",
     top: 0,
     zIndex: 5,
     textAlign: "left",
-    padding: "16px 14px",
-    fontSize: "15px",
+    padding: "14px 12px",
+    fontSize: "13px",
     color: "#64748b",
-    fontWeight: "700",
+    fontWeight: "800",
     borderBottom: "1px solid #e2e8f0",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f8fafc",
     boxShadow: "0 1px 0 #e2e8f0",
   },
-
   thDark: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#111827",
     color: "#e5e7eb",
     borderBottom: "1px solid #334155",
     boxShadow: "0 1px 0 #334155",
   },
-
   td: {
-    padding: "18px 14px",
+    padding: "14px 12px",
     verticalAlign: "middle",
     borderBottom: "1px solid #eef2f7",
     color: "#1e293b",
-    fontSize: "15px",
+    fontSize: "14px",
   },
-
   tdId: {
-    padding: "18px 14px",
+    padding: "14px 12px",
     borderBottom: "1px solid #eef2f7",
     color: "#334155",
-    fontWeight: "700",
+    fontWeight: "800",
     whiteSpace: "nowrap",
   },
-
   tdText: {
-    padding: "18px 12px",
+    padding: "14px 12px",
     borderBottom: "1px solid #eef2f7",
     maxWidth: "320px",
   },
-
   tdDark: {
     color: "#e5e7eb",
     borderBottom: "1px solid #334155",
   },
-
   textClamp: {
     overflow: "hidden",
     whiteSpace: "nowrap",
@@ -249,72 +224,70 @@ const styles = {
     fontSize: "13px",
     color: "#334155",
   },
-
   darkText: {
     color: "#e5e7eb",
   },
-
   categoryBadge: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "10px 16px",
+    padding: "8px 12px",
     borderRadius: "999px",
     backgroundColor: "#edf1f5",
     color: "#334155",
-    fontWeight: "700",
-    fontSize: "13px",
+    fontWeight: "800",
+    fontSize: "12px",
     whiteSpace: "nowrap",
   },
-
   categoryBadgeNoClass: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "10px 16px",
+    padding: "8px 12px",
     borderRadius: "999px",
     backgroundColor: "#edf1f5",
     color: "#dc2626",
-    fontWeight: "700",
-    fontSize: "13px",
+    fontWeight: "800",
+    fontSize: "12px",
     whiteSpace: "nowrap",
   },
-
   channelBadge: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "10px 18px",
+    padding: "8px 12px",
     borderRadius: "999px",
     backgroundColor: "#3b76d2",
     color: "#fff",
-    fontWeight: "700",
-    fontSize: "14px",
+    fontWeight: "800",
+    fontSize: "12px",
     textTransform: "capitalize",
+    whiteSpace: "nowrap",
   },
-
   viewButton: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "10px 18px",
-    borderRadius: "999px",
+    padding: "8px 14px",
+    borderRadius: "12px",
     backgroundColor: "#f8fafc",
     border: "1px solid #d7dee8",
     textDecoration: "none",
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#1e3a5f",
   },
-
   viewButtonDark: {
     backgroundColor: "#1e293b",
     border: "1px solid #334155",
     color: "#f8fafc",
   },
-
   empty: {
     color: "#64748b",
     margin: 0,
+    padding: "18px",
+    borderRadius: "14px",
+    background: "#f8fafc",
+    fontWeight: "700",
   },
 };
 

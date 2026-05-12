@@ -10,6 +10,8 @@ import {
   FiChevronRight,
   FiClock,
   FiClipboard,
+  FiDownload,
+  FiFileText,
   FiRefreshCw,
   FiSearch,
   FiTrendingUp,
@@ -20,6 +22,7 @@ import { AuthContext } from "../../context/AuthContext";
 import ComplaintTable from "../../components/complaints/ComplaintTable";
 
 import PageLoader from "../../components/common/PageLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader";
 
 import {
 
@@ -34,6 +37,10 @@ import {
   Legend,
 
   ResponsiveContainer,
+
+  AreaChart,
+
+  Area,
 
   BarChart,
 
@@ -81,6 +88,8 @@ function DashboardPage() {
 
   const [showCalendar, setShowCalendar] = useState(false);
 
+  const [openFilter, setOpenFilter] = useState(null);
+
   const [endDate, setEndDate] = useState("");
 
   const { user } = useContext(AuthContext);
@@ -119,6 +128,8 @@ function DashboardPage() {
 
   const [agencyRegionFilter, setAgencyRegionFilter] = useState("Toutes");
 
+  const [dashboardWidth, setDashboardWidth] = useState(1440);
+
   const [range, setRange] = useState([
 
     {
@@ -150,6 +161,47 @@ function DashboardPage() {
     }, 450);
 
   };
+
+  useEffect(() => {
+    const dashboardNode = document.getElementById("dashboard-reclamations-page");
+
+    const updateDashboardWidth = () => {
+      setDashboardWidth(dashboardNode?.offsetWidth || window.innerWidth);
+    };
+
+    updateDashboardWidth();
+
+    if (typeof ResizeObserver !== "undefined" && dashboardNode) {
+      const resizeObserver = new ResizeObserver(updateDashboardWidth);
+      resizeObserver.observe(dashboardNode);
+
+      return () => resizeObserver.disconnect();
+    }
+
+    window.addEventListener("resize", updateDashboardWidth);
+
+    return () => window.removeEventListener("resize", updateDashboardWidth);
+  }, []);
+
+  useEffect(() => {
+    const closeFiltersOnOutsideClick = (event) => {
+      if (event.target.closest("[data-dashboard-filter-layer='true']")) {
+        return;
+      }
+
+      setOpenFilter(null);
+      setShowCalendar(false);
+    };
+
+    document.addEventListener("mousedown", closeFiltersOnOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", closeFiltersOnOutsideClick);
+    };
+  }, []);
+
+  const isCompactDashboard = dashboardWidth <= 1120;
+  const isMobileDashboard = dashboardWidth <= 720;
 
 
 
@@ -270,6 +322,8 @@ function DashboardPage() {
     setEndDate("");
 
     setShowCalendar(false);
+
+    setOpenFilter(null);
 
     setCurrentPage(1);
 
@@ -631,11 +685,11 @@ function DashboardPage() {
 
     const categoryColors = {
 
-      "SERVICE CLIENT": "#3f8d69",
+      "SERVICE CLIENT": "#166534",
 
-      "SINISTRE AUTO": "#5d97e6",
+      "SINISTRE AUTO": "#3f8d69",
 
-      "SINISTRE VIE": "#7ebd85",
+      "SINISTRE VIE": "#65b36f",
 
       "SINISTRE IRDS": "#a9d798",
 
@@ -717,6 +771,56 @@ function DashboardPage() {
 
   }, [complaints]);
 
+  const urgencyStats = useMemo(() => {
+
+    const urgencyConfig = {
+
+      elevee: { label: "Élevée", color: "#e97667", bg: "#fef2f2" },
+
+      moyenne: { label: "Moyenne", color: "#e8be59", bg: "#fffbeb" },
+
+      faible: { label: "Faible", color: "#65b36f", bg: "#f0fdf4" },
+
+    };
+
+    const counts = { elevee: 0, moyenne: 0, faible: 0 };
+
+    complaints.forEach((item) => {
+
+      const urgency = String(item.urgency || "").toLowerCase();
+
+      if (counts[urgency] !== undefined) {
+
+        counts[urgency] += 1;
+
+      }
+
+    });
+
+    const total = complaints.length || 1;
+
+    return Object.entries(urgencyConfig).map(([key, config]) => {
+
+      const value = counts[key] || 0;
+
+      return {
+
+        key,
+
+        value,
+
+        percent: `${Math.round((value / total) * 100)}%`,
+
+        width: `${Math.max((value / total) * 100, value > 0 ? 8 : 0)}%`,
+
+        ...config,
+
+      };
+
+    });
+
+  }, [complaints]);
+
 
 
   const agencyRegions = useMemo(
@@ -787,6 +891,55 @@ function DashboardPage() {
 
   ).size;
 
+  const dashboardExportRows = useMemo(
+    () =>
+      filteredComplaints.map((item) => ({
+        id: item.comment_id ?? item.id,
+        client: item.author_name || "",
+        canal: formatSource(item.source) || "",
+        date: item.comment_date || "",
+        categorie: normalizeCategory(item),
+        statut: formatStatus(item.status),
+        urgence: formatUrgencyLabel(item.urgency),
+        reclamation: item.text_original || "",
+      })),
+    [filteredComplaints]
+  );
+
+  const exportDashboardExcel = () => {
+    const html = buildExportTableHtml(dashboardExportRows, stats);
+    downloadFile(`dashboard-reclamations-${getTodayStamp()}.xls`, html, "application/vnd.ms-excel");
+  };
+
+  const exportDashboardPdf = () => {
+    const reportWindow = window.open("", "_blank", "width=1100,height=760");
+    if (!reportWindow) return;
+
+    reportWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>Dashboard Réclamations</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; margin: 28px; }
+            h1 { margin: 0 0 12px; color: #166534; }
+            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+            .stat { border: 1px solid #dbe4ee; border-radius: 12px; padding: 12px; }
+            .stat strong { display: block; font-size: 24px; margin-top: 6px; }
+            table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            th, td { border: 1px solid #dbe4ee; padding: 8px; text-align: left; vertical-align: top; }
+            th { background: #f0fdf4; color: #166534; }
+          </style>
+        </head>
+        <body>
+          ${buildExportTableHtml(dashboardExportRows, stats, true)}
+          <script>window.onload = () => { window.print(); };</script>
+        </body>
+      </html>
+    `);
+    reportWindow.document.close();
+  };
+
 
 
   return (//return principal
@@ -795,13 +948,13 @@ function DashboardPage() {
 
 
 
-    <div style={styles.page}>
+    <div id="dashboard-reclamations-page" style={styles.page}>
 
       {pageLoading && <PageLoader />}
 
 
 
-      {loading && <PageLoader />}
+      {loading && <SkeletonLoader type="dashboard" />}
 
       {error && <p style={styles.errorText}>{error}</p>}
 
@@ -811,11 +964,61 @@ function DashboardPage() {
 
         <>
 
-          <div style={{ ...styles.filtersBar, ...(isDark ? styles.darkCard : {}) }}>
+          <div style={{ ...styles.dashboardHero, ...(isDark ? styles.darkCard : {}) }}>
 
-            <div style={styles.filtersAll}>
+            <div>
 
-              <div style={styles.dateRangeWrapper}>
+              <h1 style={{ ...styles.dashboardTitle, ...(isDark ? styles.darkTitle : {}) }}>Dashboard Réclamations</h1>
+
+            </div>
+
+            <div style={styles.exportActions}>
+
+              <button
+                type="button"
+                onClick={exportDashboardPdf}
+                style={{ ...styles.exportButton, ...(isDark ? styles.darkButtonControl : {}) }}
+              >
+                <FiFileText />
+                PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={exportDashboardExcel}
+                style={{ ...styles.exportButtonPrimary, ...(isDark ? styles.darkButtonControl : {}) }}
+              >
+                <FiDownload />
+                Excel
+              </button>
+
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              ...styles.filtersBar,
+              ...(showCalendar && !isMobileDashboard ? styles.filtersBarCalendarOpen : {}),
+              ...(isDark ? styles.darkCard : {}),
+            }}
+          >
+
+            <div
+              style={{
+                ...styles.filtersAll,
+                ...(isCompactDashboard ? styles.filtersAllCompact : {}),
+                ...(isMobileDashboard ? styles.filtersAllMobile : {}),
+              }}
+            >
+
+              <div
+                data-dashboard-filter-layer="true"
+                style={{
+                  ...styles.dateRangeWrapper,
+                  ...(isCompactDashboard ? styles.dateRangeWrapperCompact : {}),
+                }}
+              >
 
                 <span style={styles.compactLabel}>Période</span>
 
@@ -827,7 +1030,10 @@ function DashboardPage() {
 
                   style={{ ...styles.dateRangeButton, ...(isDark ? styles.darkControl : {}) }}
 
-                  onClick={() => setShowCalendar(!showCalendar)}
+                  onClick={() => {
+                    setOpenFilter(null);
+                    setShowCalendar((prev) => !prev);
+                  }}
 
                 >
 
@@ -843,7 +1049,13 @@ function DashboardPage() {
 
                 {showCalendar && (
 
-                  <div style={{ ...styles.calendarDropdown, ...(isDark ? styles.darkDropdown : {}) }}>
+                  <div
+                    style={{
+                      ...styles.calendarDropdown,
+                      ...(isMobileDashboard ? styles.calendarDropdownMobile : {}),
+                      ...(isDark ? styles.darkDropdown : {}),
+                    }}
+                  >
 
                     <div style={{ ...styles.calendarWrapper, ...(isDark ? styles.darkCalendarWrapper : {}) }}>
 
@@ -889,7 +1101,10 @@ function DashboardPage() {
 
                       style={styles.calendarApplyBtn}
 
-                      onClick={() => setShowCalendar(false)}
+                      onClick={() => {
+                        setShowCalendar(false);
+                        setOpenFilter(null);
+                      }}
 
                     >
 
@@ -915,6 +1130,15 @@ function DashboardPage() {
 
                 options={categoryOptions}
 
+                isOpen={openFilter === "category"}
+
+                onToggle={() => {
+                  setShowCalendar(false);
+                  setOpenFilter((prev) => (prev === "category" ? null : "category"));
+                }}
+
+                onClose={() => setOpenFilter(null)}
+
               />
 
 
@@ -928,6 +1152,15 @@ function DashboardPage() {
                 onChange={(value) => runWithLoader(() => setStatusFilter(value))}
 
                 options={statusOptions}
+
+                isOpen={openFilter === "status"}
+
+                onToggle={() => {
+                  setShowCalendar(false);
+                  setOpenFilter((prev) => (prev === "status" ? null : "status"));
+                }}
+
+                onClose={() => setOpenFilter(null)}
 
               />
 
@@ -977,7 +1210,13 @@ function DashboardPage() {
 
 
 
-          <div style={styles.statsGrid}>
+          <div
+            style={{
+              ...styles.statsGrid,
+              ...(isCompactDashboard ? styles.statsGridCompact : {}),
+              ...(isMobileDashboard ? styles.statsGridMobile : {}),
+            }}
+          >
 
             <StatCard
 
@@ -985,7 +1224,7 @@ function DashboardPage() {
 
               value={stats.total}
 
-              color="#7aa9ff"
+              color="#166534"
 
               icon={<FiClipboard />}
 
@@ -1003,7 +1242,7 @@ function DashboardPage() {
 
               value={stats.enCours}
 
-              color="#e8be59"
+              color="#f59e0b"
 
               icon={<FiClock />}
 
@@ -1021,7 +1260,7 @@ function DashboardPage() {
 
               value={stats.traitees}
 
-              color="#65b36f"
+              color="#10b981"
 
               icon={<FiCheckCircle />}
 
@@ -1055,7 +1294,12 @@ function DashboardPage() {
 
 
 
-          <div style={styles.chartsGrid}>
+          <div
+            style={{
+              ...styles.chartsGrid,
+              ...(isCompactDashboard ? styles.chartsGridCompact : {}),
+            }}
+          >
 
             <div
 
@@ -1064,6 +1308,8 @@ function DashboardPage() {
                 ...styles.chartCard,
 
                 ...styles.categoryChartCard,
+
+                ...(isCompactDashboard ? styles.chartCardCompact : {}),
 
                 ...(isDark ? styles.darkCard : {}),
 
@@ -1105,6 +1351,8 @@ function DashboardPage() {
 
                   selectedCategory={categoryFilter}
 
+                  compact={isCompactDashboard}
+
                   onSelect={(label) =>
 
                     runWithLoader(() =>
@@ -1134,6 +1382,8 @@ function DashboardPage() {
                 ...styles.chartCard,
 
                 ...styles.channelChartCard,
+
+                ...(isCompactDashboard ? styles.chartCardCompact : {}),
 
                 ...(isDark ? styles.darkCard : {}),
 
@@ -1169,37 +1419,21 @@ function DashboardPage() {
 
               {channelStats.length > 0 ? (
 
-                channelStats.map((item) => (
+                <ChannelDistribution
 
-                  <ChannelRow
+                  data={channelStats}
 
-                    key={item.label}
+                  selectedChannel={channelFilter}
 
-                    label={item.label}
+                  onSelect={(label) =>
 
-                    value={item.value}
+                    setChannelFilter(channelFilter === label ? "Tous" : label)
 
-                    percent={item.percent}
+                  }
 
-                    width={item.width}
+                  isDark={isDark}
 
-                    isActive={channelFilter === "Tous" || channelFilter === item.label}
-
-                    isHovered={hoveredChannel === item.label}
-
-                    onMouseEnter={() => setHoveredChannel(item.label)}
-
-                    onMouseLeave={() => setHoveredChannel(null)}
-
-                    onClick={() =>
-
-                      setChannelFilter(channelFilter === item.label ? "Tous" : item.label)
-
-                    }
-
-                  />
-
-                ))
+                />
 
               ) : (
 
@@ -1218,6 +1452,38 @@ function DashboardPage() {
                 ...styles.chartCard,
 
                 ...styles.feedbackChartCard,
+
+                ...styles.urgencyChartCard,
+
+                ...(isCompactDashboard ? styles.chartCardCompact : {}),
+
+                ...(isDark ? styles.darkCard : {}),
+
+              }}
+
+            >
+
+              <div style={styles.chartTitleRow}>
+
+                <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Répartition par niveau d'urgence</h3>
+
+              </div>
+
+              <UrgencyChart data={urgencyStats} isDark={isDark} />
+
+            </div>
+
+
+
+            <div
+
+              style={{
+
+                ...styles.chartCard,
+
+                ...styles.feedbackChartCard,
+
+                ...(isCompactDashboard ? styles.chartCardCompact : {}),
 
                 ...(isDark ? styles.darkCard : {}),
 
@@ -1855,7 +2121,7 @@ function FeedbackChart({ data }) {
 
 }
 
-function AdminCategoryPie({ data, selectedCategory, onSelect }) {
+function AdminCategoryPie({ data, selectedCategory, compact = false, onSelect }) {
 
   if (!data.length) {
 
@@ -1883,9 +2149,9 @@ function AdminCategoryPie({ data, selectedCategory, onSelect }) {
 
             cx="50%"
 
-            cy="50%"
+            cy={compact ? "46%" : "50%"}
 
-            outerRadius={95}
+            outerRadius={compact ? 78 : 95}
 
             label={({ label, percent }) =>
 
@@ -2095,9 +2361,7 @@ function AgentCategoryGauge({ data, user }) {
 
 
 
-function CompactFilter({ label, value, onChange, options }) {
-
-  const [open, setOpen] = useState(false);
+function CompactFilter({ label, value, onChange, options, isOpen, onToggle, onClose }) {
 
   const { theme } = useContext(ThemeContext);
 
@@ -2107,7 +2371,7 @@ function CompactFilter({ label, value, onChange, options }) {
 
   return (
 
-    <div style={styles.customFilter}>
+    <div data-dashboard-filter-layer="true" style={styles.customFilter}>
 
       <span style={{ ...styles.compactLabel, ...(isDark ? styles.darkMutedText : {}) }}>{label}</span>
 
@@ -2119,7 +2383,7 @@ function CompactFilter({ label, value, onChange, options }) {
 
         style={{ ...styles.customSelectButton, ...(isDark ? styles.darkControl : {}) }}
 
-        onClick={() => setOpen(!open)}
+        onClick={onToggle}
 
       >
 
@@ -2131,7 +2395,7 @@ function CompactFilter({ label, value, onChange, options }) {
 
 
 
-      {open && (
+      {isOpen && (
 
         <div style={{ ...styles.customSelectMenu, ...(isDark ? styles.darkDropdown : {}) }}>
 
@@ -2157,7 +2421,7 @@ function CompactFilter({ label, value, onChange, options }) {
 
                 onChange(option);
 
-                setOpen(false);
+                onClose();
 
               }}
 
@@ -2375,6 +2639,422 @@ function ChannelRow({
 
 }
 
+function ChannelDonut({
+
+  data,
+
+  selectedChannel,
+
+  hoveredChannel,
+
+  onHover,
+
+  onSelect,
+
+  isDark,
+
+}) {
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  const activeLabel = selectedChannel !== "Tous" ? selectedChannel : hoveredChannel;
+
+  return (
+
+    <div style={styles.channelDonutLayout}>
+
+      <div style={styles.channelDonutBox}>
+
+        <ResponsiveContainer width="100%" height={170}>
+
+          <PieChart>
+
+            <Pie
+
+              data={data}
+
+              dataKey="value"
+
+              nameKey="label"
+
+              innerRadius={50}
+
+              outerRadius={78}
+
+              paddingAngle={4}
+
+              startAngle={90}
+
+              endAngle={-270}
+
+              onMouseLeave={() => onHover(null)}
+
+            >
+
+              {data.map((entry) => {
+
+                const isActive =
+
+                  selectedChannel === "Tous" || selectedChannel === entry.label;
+
+                return (
+
+                  <Cell
+
+                    key={entry.label}
+
+                    fill={getChannelColor(entry.label)}
+
+                    opacity={isActive ? 1 : 0.32}
+
+                    style={{ cursor: "pointer", outline: "none" }}
+
+                    onClick={() => onSelect(entry.label)}
+
+                    onMouseEnter={() => onHover(entry.label)}
+
+                  />
+
+                );
+
+              })}
+
+            </Pie>
+
+            <Tooltip formatter={(value, name) => [`${value} réclamation(s)`, name]} />
+
+          </PieChart>
+
+        </ResponsiveContainer>
+
+        <div style={styles.channelDonutCenter}>
+
+          <strong style={{ ...styles.channelDonutTotal, ...(isDark ? styles.darkTitle : {}) }}>{total}</strong>
+
+          <span style={{ ...styles.channelDonutLabel, ...(isDark ? styles.darkMutedText : {}) }}>Total</span>
+
+        </div>
+
+      </div>
+
+      <div style={styles.channelLegendList}>
+
+        {data.map((item) => {
+
+          const isActive =
+
+            selectedChannel === "Tous" || selectedChannel === item.label;
+
+          const isFocused = activeLabel === item.label;
+
+          return (
+
+            <button
+
+              key={item.label}
+
+              type="button"
+
+              style={{
+
+                ...styles.channelLegendButton,
+
+                ...(isDark ? styles.darkButtonControl : {}),
+
+                opacity: isActive ? 1 : 0.55,
+
+                transform: isFocused ? "translateX(4px)" : "translateX(0)",
+
+              }}
+
+              onClick={() => onSelect(item.label)}
+
+              onMouseEnter={() => onHover(item.label)}
+
+              onMouseLeave={() => onHover(null)}
+
+            >
+
+              <span
+
+                style={{
+
+                  ...styles.channelLegendDot,
+
+                  background: getChannelColor(item.label),
+
+                }}
+
+              />
+
+              <span style={{ ...styles.channelLegendName, ...(isDark ? styles.darkTitle : {}) }}>{item.label}</span>
+
+              <strong style={{ ...styles.channelLegendValue, ...(isDark ? styles.darkTitle : {}) }}>{item.value}</strong>
+
+              <span style={{ ...styles.channelLegendPercent, ...(isDark ? styles.darkMutedText : {}) }}>{item.percent}</span>
+
+            </button>
+
+          );
+
+        })}
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+function ChannelDistribution({ data, selectedChannel, onSelect, isDark }) {
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+
+    <div style={styles.channelDistribution}>
+
+      <div style={styles.channelDistributionHeader}>
+
+        <div>
+
+          <span style={{ ...styles.channelDistributionEyebrow, ...(isDark ? styles.darkMutedText : {}) }}>Total canaux</span>
+
+          <strong style={{ ...styles.channelDistributionTotal, ...(isDark ? styles.darkTitle : {}) }}>{total}</strong>
+
+        </div>
+
+        <span style={styles.channelDistributionBadge}>{data.length} sources</span>
+
+      </div>
+
+      <div style={styles.channelStackTrack}>
+
+        {data.map((item) => {
+
+          const isActive = selectedChannel === "Tous" || selectedChannel === item.label;
+
+          return (
+
+            <button
+
+              key={item.label}
+
+              type="button"
+
+              aria-label={item.label}
+
+              title={`${item.label}: ${item.value} (${item.percent})`}
+
+              style={{
+
+                ...styles.channelStackSegment,
+
+                width: item.width,
+
+                background: getChannelColor(item.label),
+
+                opacity: isActive ? 1 : 0.32,
+
+              }}
+
+              onClick={() => onSelect(item.label)}
+
+            />
+
+          );
+
+        })}
+
+      </div>
+
+      <div style={styles.channelDistributionRows}>
+
+        {data.map((item) => {
+
+          const isActive = selectedChannel === "Tous" || selectedChannel === item.label;
+
+          return (
+
+            <button
+
+              key={item.label}
+
+              type="button"
+
+              style={{
+
+                ...styles.channelDistributionRow,
+
+                ...(isDark ? styles.darkButtonControl : {}),
+
+                opacity: isActive ? 1 : 0.55,
+
+              }}
+
+              onClick={() => onSelect(item.label)}
+
+            >
+
+              <span
+
+                style={{
+
+                  ...styles.channelDistributionDot,
+
+                  background: getChannelColor(item.label),
+
+                }}
+
+              />
+
+              <span style={{ ...styles.channelDistributionName, ...(isDark ? styles.darkTitle : {}) }}>{item.label}</span>
+
+              <strong style={{ ...styles.channelDistributionValue, ...(isDark ? styles.darkTitle : {}) }}>{item.value}</strong>
+
+              <span style={{ ...styles.channelDistributionPercent, ...(isDark ? styles.darkMutedText : {}) }}>{item.percent}</span>
+
+            </button>
+
+          );
+
+        })}
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+function UrgencyChart({ data, isDark }) {
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  if (!data.length || total === 0) {
+
+    return <p style={styles.emptyText}>Aucune donnée urgence.</p>;
+
+  }
+
+  const urgencyOrder = ["elevee", "moyenne", "faible"];
+
+  const chartData = urgencyOrder
+    .map((key) => data.find((item) => item.key === key))
+    .filter(Boolean)
+    .map((item) => ({
+      ...item,
+      percentValue: Math.round((item.value / total) * 100),
+    }));
+
+  const mainColor = "#166534";
+
+  return (
+
+    <div style={styles.urgencyCurvePanel}>
+
+      <div style={styles.urgencyCurveSummary}>
+
+        {chartData.map((item) => (
+
+          <div key={item.key} style={{ ...styles.urgencyCurveMetric, ...(isDark ? styles.darkButtonControl : {}) }}>
+
+            <span style={{ ...styles.urgencyCurveDot, background: item.color }} />
+
+            <span style={{ ...styles.urgencyCurveLabel, ...(isDark ? styles.darkMutedText : {}) }}>{item.label}</span>
+
+            <strong style={{ ...styles.urgencyCurveValue, ...(isDark ? styles.darkTitle : {}) }}>{item.value}</strong>
+
+            <span style={{ ...styles.urgencyCurvePercent, color: item.color }}>{item.percentValue}%</span>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <div style={styles.urgencyCurveChart}>
+
+        <ResponsiveContainer width="100%" height="100%">
+
+          <AreaChart data={chartData} margin={{ top: 18, right: 18, left: -18, bottom: 6 }}>
+
+            <defs>
+
+              <linearGradient id="urgencyCurveGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={mainColor} stopOpacity={0.22} />
+                <stop offset="100%" stopColor={mainColor} stopOpacity={0.02} />
+              </linearGradient>
+
+            </defs>
+
+            <CartesianGrid strokeDasharray="4 6" vertical={false} stroke={isDark ? "#334155" : "#dbe7df"} />
+
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: isDark ? "#cbd5e1" : "#64748b", fontSize: 12, fontWeight: 800 }}
+            />
+
+            <YAxis
+              allowDecimals={false}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: isDark ? "#cbd5e1" : "#94a3b8", fontSize: 11, fontWeight: 700 }}
+            />
+
+            <Tooltip
+              formatter={(value, name, props) => [
+                `${value} réclamation(s) - ${props.payload.percentValue}%`,
+                "Urgence",
+              ]}
+              contentStyle={{
+                borderRadius: "14px",
+                border: "1px solid #bbf7d0",
+                boxShadow: "0 14px 30px rgba(15, 23, 42, 0.12)",
+                fontWeight: 800,
+              }}
+            />
+
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={mainColor}
+              strokeWidth={4}
+              fill="url(#urgencyCurveGradient)"
+              activeDot={{ r: 7, stroke: "#ffffff", strokeWidth: 3 }}
+              dot={(props) => {
+                const { cx, cy, payload } = props;
+
+                return (
+                  <circle
+                    key={payload.key}
+                    cx={cx}
+                    cy={cy}
+                    r={6}
+                    fill={payload.color}
+                    stroke="#ffffff"
+                    strokeWidth={3}
+                  />
+                );
+              }}
+            />
+
+          </AreaChart>
+
+        </ResponsiveContainer>
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
 
 
 function parseDate(dateString) {
@@ -2439,6 +3119,109 @@ function formatStatus(status) {
 
 }
 
+function formatUrgencyLabel(urgency) {
+
+  if (urgency === "elevee") return "Élevée";
+
+  if (urgency === "moyenne") return "Moyenne";
+
+  if (urgency === "faible") return "Faible";
+
+  return urgency || "-";
+
+}
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+
+    .replace(/&/g, "&amp;")
+
+    .replace(/</g, "&lt;")
+
+    .replace(/>/g, "&gt;")
+
+    .replace(/"/g, "&quot;");
+
+}
+
+function buildExportTableHtml(rows, stats, pdfMode = false) {
+
+  const tableRows = rows
+
+    .map(
+
+      (row) => `
+        <tr>
+          <td>${escapeHtml(row.id)}</td>
+          <td>${escapeHtml(row.client)}</td>
+          <td>${escapeHtml(row.canal)}</td>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${escapeHtml(row.categorie)}</td>
+          <td>${escapeHtml(row.statut)}</td>
+          <td>${escapeHtml(row.urgence)}</td>
+          <td>${escapeHtml(row.reclamation)}</td>
+        </tr>`
+
+    )
+
+    .join("");
+
+  return `
+    <h1>Dashboard Réclamations</h1>
+    <p>Export généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}</p>
+    <div class="stats">
+      <div class="stat">Total<strong>${escapeHtml(stats.total)}</strong></div>
+      <div class="stat">En cours<strong>${escapeHtml(stats.enCours)}</strong></div>
+      <div class="stat">Traitées<strong>${escapeHtml(stats.traitees)}</strong></div>
+      <div class="stat">En attente<strong>${escapeHtml(stats.enAttente)}</strong></div>
+    </div>
+    <table ${pdfMode ? "" : 'border="1"'}>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Client</th>
+          <th>Canal</th>
+          <th>Date</th>
+          <th>Catégorie</th>
+          <th>Statut</th>
+          <th>Urgence</th>
+          <th>Réclamation</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
+
+}
+
+function getTodayStamp() {
+
+  return new Date().toISOString().slice(0, 10);
+
+}
+
+function downloadFile(filename, content, type) {
+
+  const blob = new Blob([content], { type });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+
+  link.download = filename;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+
+}
+
 
 
 function getChannelBadgeStyle(label) {
@@ -2447,11 +3230,11 @@ function getChannelBadgeStyle(label) {
 
     display: "inline-block",
 
-    minWidth: "92px",
+    minWidth: "88px",
 
     textAlign: "center",
 
-    padding: "8px 14px",
+    padding: "7px 13px",
 
     borderRadius: "12px",
 
@@ -2459,7 +3242,7 @@ function getChannelBadgeStyle(label) {
 
     fontWeight: "700",
 
-    fontSize: "14px",
+    fontSize: "13px",
 
     background:
 
@@ -2474,6 +3257,16 @@ function getChannelBadgeStyle(label) {
     transition: "all 0.25s ease",
 
   };
+
+}
+
+function getChannelColor(label) {
+
+  if (label === "Facebook") return "#2563eb";
+
+  if (label === "LinkedIn") return "#0ea5e9";
+
+  return "#64748b";
 
 }
 
@@ -3197,27 +3990,224 @@ const styles = {
 
     flexDirection: "column",
 
-    gap: "20px",
+    gap: "16px",
+
+    padding: "4px",
+
+    background:
+
+      "linear-gradient(135deg, #f8fafc 0%, #f0fdf4 38%, #ffffff 100%)",
+
+    borderRadius: "18px",
+
+  },
+
+  dashboardHero: {
+
+    display: "flex",
+
+    justifyContent: "space-between",
+
+    alignItems: "center",
+
+    gap: "24px",
+
+    flexWrap: "wrap",
+
+    padding: "18px 22px",
+
+    borderRadius: "18px",
+
+    background:
+
+      "linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(220, 252, 231, 0.9))",
+
+    border: "1px solid rgba(22, 101, 52, 0.14)",
+
+    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.09)",
+
+  },
+
+  dashboardEyebrow: {
+
+    display: "inline-block",
+
+    color: "#166534",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+    letterSpacing: "0",
+
+    textTransform: "uppercase",
+
+    marginBottom: "8px",
+
+  },
+
+  dashboardTitle: {
+
+    margin: 0,
+
+    color: "#111827",
+
+    fontSize: "38px",
+
+    fontWeight: "900",
+
+    lineHeight: 1.05,
+
+  },
+
+  dashboardSubtitle: {
+
+    margin: "10px 0 0",
+
+    color: "#166534",
+
+    fontSize: "14px",
+
+    fontWeight: "700",
+
+  },
+
+  dashboardHeroStats: {
+
+    display: "flex",
+
+    gap: "10px",
+
+    flexWrap: "wrap",
+
+    justifyContent: "flex-end",
+
+  },
+
+  dashboardHeroChip: {
+
+    border: "1px solid rgba(22, 101, 52, 0.18)",
+
+    background: "rgba(255, 255, 255, 0.72)",
+
+    color: "#166534",
+
+    borderRadius: "999px",
+
+    padding: "10px 14px",
+
+    fontSize: "13px",
+
+    fontWeight: "900",
+
+  },
+
+  exportActions: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "flex-end",
+
+    gap: "10px",
+
+    flexWrap: "wrap",
+
+  },
+
+  exportButton: {
+
+    height: "40px",
+
+    borderRadius: "12px",
+
+    border: "1px solid #bbf7d0",
+
+    background: "#ffffff",
+
+    color: "#166534",
+
+    padding: "0 14px",
+
+    display: "inline-flex",
+
+    alignItems: "center",
+
+    gap: "8px",
+
+    fontWeight: "900",
+
+    cursor: "pointer",
+
+  },
+
+  exportButtonPrimary: {
+
+    height: "40px",
+
+    borderRadius: "12px",
+
+    border: "1px solid #166534",
+
+    background: "#166534",
+
+    color: "#ffffff",
+
+    padding: "0 14px",
+
+    display: "inline-flex",
+
+    alignItems: "center",
+
+    gap: "8px",
+
+    fontWeight: "900",
+
+    cursor: "pointer",
 
   },
 
 
 
+
   filtersBar: {
 
-    background: "#ffffff",
+    position: "relative",
 
-    borderRadius: "22px",
+    zIndex: 7000,
 
-    padding: "18px",
+    background: "rgba(255, 255, 255, 0.86)",
 
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+    borderRadius: "18px",
+
+    padding: "14px",
+
+    border: "1px solid rgba(22, 101, 52, 0.12)",
+
+    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.07)",
+
+    backdropFilter: "blur(10px)",
+
+  },
+
+  filtersBarCalendarOpen: {
+
+    position: "relative",
+
+    zIndex: 5000,
+
+    overflow: "visible",
 
   },
 
 
 
   filtersAll: {
+
+    position: "relative",
+
+    zIndex: 7001,
 
     display: "flex",
 
@@ -3287,7 +4277,7 @@ const styles = {
 
     background: "#f8fafc",
 
-    border: "1px solid #e2e8f0",
+    border: "1px solid #bbf7d0",
 
     borderRadius: "16px",
 
@@ -3475,7 +4465,7 @@ const styles = {
 
     border: "1px solid #e2e8f0",
 
-    background: "#f8fafc",
+    background: "#f0fdf4",
 
     padding: "0 12px",
 
@@ -3555,7 +4545,7 @@ const styles = {
 
     fontSize: "12px",
 
-    fontWeight: "700",
+    fontWeight: "800",
 
     color: "#64748b",
 
@@ -3607,9 +4597,9 @@ const styles = {
 
     borderRadius: "14px",
 
-    border: "1px solid #e2e8f0",
+    border: "1px solid #bbf7d0",
 
-    background: "#f8fafc",
+    background: "#f0fdf4",
 
     padding: "0 14px",
 
@@ -3659,11 +4649,11 @@ const styles = {
 
     borderRadius: "14px",
 
-    border: "1px solid #dbe3ef",
+    border: "1px solid #86efac",
 
-    background: "#ffffff",
+    background: "#f0fdf4",
 
-    color: "#475569",
+    color: "#166534",
 
     fontWeight: "700",
 
@@ -3699,13 +4689,13 @@ const styles = {
 
   statCard: {
 
-    background: "#ffffff",
+    background: "rgba(255, 255, 255, 0.94)",
 
-    borderRadius: "20px",
+    borderRadius: "18px",
 
     padding: "18px",
 
-    boxShadow: "0 10px 28px rgba(15, 23, 42, 0.05)",
+    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.07)",
 
     display: "flex",
 
@@ -3715,7 +4705,7 @@ const styles = {
 
     cursor: "pointer",
 
-    border: "2px solid transparent",
+    border: "1px solid rgba(22, 101, 52, 0.12)",
 
     transition: "all 0.25s ease",
 
@@ -3725,9 +4715,9 @@ const styles = {
 
   statCardActive: {
 
-    border: "2px solid #166534",
+    border: "1px solid #166534",
 
-    boxShadow: "0 18px 36px rgba(22, 101, 52, 0.16)",
+    boxShadow: "0 22px 44px rgba(22, 101, 52, 0.14)",
 
     transform: "translateY(-3px)",
 
@@ -3767,11 +4757,11 @@ const styles = {
 
   statIcon: {
 
-    width: "54px",
+    width: "50px",
 
-    height: "54px",
+    height: "50px",
 
-    borderRadius: "16px",
+    borderRadius: "18px",
 
     display: "flex",
 
@@ -3791,11 +4781,11 @@ const styles = {
 
     margin: 0,
 
-    color: "#475569",
+    color: "#64748b",
 
-    fontSize: "15px",
+    fontSize: "13px",
 
-    fontWeight: "600",
+    fontWeight: "800",
 
   },
 
@@ -3805,9 +4795,9 @@ const styles = {
 
     margin: "6px 0 0 0",
 
-    fontSize: "34px",
+    fontSize: "32px",
 
-    color: "#24324a",
+    color: "#111827",
 
   },
 
@@ -3847,7 +4837,7 @@ const styles = {
 
     gridAutoRows: "minmax(180px, auto)",
 
-    gap: "18px",
+    gap: "20px",
 
     alignItems: "stretch",
 
@@ -3857,13 +4847,15 @@ const styles = {
 
   chartCard: {
 
-    background: "#ffffff",
+    background: "rgba(255, 255, 255, 0.95)",
 
-    borderRadius: "18px",
+    borderRadius: "24px",
 
-    padding: "22px",
+    padding: "24px",
 
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+    border: "1px solid rgba(22, 101, 52, 0.12)",
+
+    boxShadow: "0 20px 44px rgba(22, 101, 52, 0.08)",
 
     minHeight: "0",
 
@@ -3871,11 +4863,19 @@ const styles = {
 
   },
 
+  chartCardCompact: {
+
+    gridColumn: "1",
+
+    gridRow: "auto",
+
+  },
+
 
 
   categoryChartCard: {
 
-    gridRow: "span 2",
+    gridColumn: "1",
 
     minHeight: "430px",
 
@@ -3889,13 +4889,33 @@ const styles = {
 
   channelChartCard: {
 
-    minHeight: "170px",
+    gridColumn: "1",
+
+    alignSelf: "start",
+
+    height: "fit-content",
+
+    minHeight: "0",
+
+    padding: "20px 22px 22px",
+
+  },
+
+  urgencyChartCard: {
+
+    gridColumn: "2",
+
+    gridRow: "1",
+
+    minHeight: "220px",
 
   },
 
 
 
   feedbackChartCard: {
+
+    gridColumn: "2",
 
     minHeight: "260px",
 
@@ -3921,9 +4941,11 @@ const styles = {
 
     margin: 0,
 
-    fontSize: "18px",
+    fontSize: "17px",
 
-    color: "#0f172a",
+    color: "#111827",
+
+    fontWeight: "900",
 
   },
 
@@ -3941,11 +4963,11 @@ const styles = {
 
   clearChartFilter: {
 
-    border: "1px solid #bfdbfe",
+    border: "1px solid #86efac",
 
-    background: "#eff6ff",
+    background: "#ecfdf5",
 
-    color: "#2563eb",
+    color: "#166534",
 
     borderRadius: "999px",
 
@@ -4095,17 +5117,15 @@ const styles = {
 
   },
 
-
-
   channelRow: {
 
     display: "flex",
 
     alignItems: "center",
 
-    gap: "16px",
+    gap: "14px",
 
-    marginBottom: "12px",
+    marginBottom: "10px",
 
     transition: "all 0.25s ease",
 
@@ -4131,15 +5151,973 @@ const styles = {
 
   },
 
-  maeMapSection: {
+  chartsGridCompact: {
+
+    gridTemplateColumns: "minmax(0, 1fr)",
+
+  },
+
+  statsGridCompact: {
+
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+
+  },
+
+  statsGridMobile: {
+
+    gridTemplateColumns: "1fr",
+
+  },
+
+  filtersAllCompact: {
+
+    display: "grid",
+
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+
+    alignItems: "end",
+
+  },
+
+  filtersAllMobile: {
+
+    gridTemplateColumns: "1fr",
+
+  },
+
+  channelDistribution: {
+
+    display: "grid",
+
+    gap: "14px",
+
+  },
+
+  channelDistributionHeader: {
+
+    display: "flex",
+
+    alignItems: "flex-start",
+
+    justifyContent: "space-between",
+
+    gap: "16px",
+
+  },
+
+  channelDistributionEyebrow: {
+
+    display: "block",
+
+    color: "#166534",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+    marginBottom: "4px",
+
+  },
+
+  channelDistributionTotal: {
+
+    color: "#0f172a",
+
+    fontSize: "34px",
+
+    fontWeight: "900",
+
+    lineHeight: 1,
+
+  },
+
+  channelDistributionBadge: {
+
+    border: "1px solid #bbf7d0",
+
+    background: "#ecfdf5",
+
+    color: "#166534",
+
+    borderRadius: "999px",
+
+    padding: "7px 11px",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+  },
+
+  channelStackTrack: {
+
+    display: "flex",
+
+    height: "16px",
+
+    background: "#fce7f3",
+
+    borderRadius: "999px",
+
+    overflow: "hidden",
+
+  },
+
+  channelStackSegment: {
+
+    height: "100%",
+
+    border: "0",
+
+    padding: 0,
+
+    cursor: "pointer",
+
+    transition: "opacity 0.2s ease",
+
+  },
+
+  channelDistributionRows: {
+
+    display: "grid",
+
+    gap: "10px",
+
+  },
+
+  channelDistributionRow: {
+
+    width: "100%",
+
+    border: "1px solid #bbf7d0",
+
+    background: "#f0fdf4",
+
+    borderRadius: "14px",
+
+    padding: "11px 12px",
+
+    display: "grid",
+
+    gridTemplateColumns: "10px 1fr auto auto",
+
+    alignItems: "center",
+
+    gap: "10px",
+
+    cursor: "pointer",
+
+    textAlign: "left",
+
+    transition: "all 0.2s ease",
+
+  },
+
+  channelDistributionDot: {
+
+    width: "10px",
+
+    height: "10px",
+
+    borderRadius: "50%",
+
+  },
+
+  channelDistributionName: {
+
+    color: "#0f172a",
+
+    fontSize: "13px",
+
+    fontWeight: "800",
+
+  },
+
+  channelDistributionValue: {
+
+    color: "#0f172a",
+
+    fontSize: "15px",
+
+    fontWeight: "900",
+
+  },
+
+  channelDistributionPercent: {
+
+    color: "#166534",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+    minWidth: "34px",
+
+    textAlign: "right",
+
+  },
+
+  channelDonutLayout: {
+
+    display: "grid",
+
+    gridTemplateColumns: "190px 1fr",
+
+    alignItems: "center",
+
+    gap: "18px",
+
+  },
+
+  channelDonutBox: {
+
+    position: "relative",
+
+    height: "170px",
+
+  },
+
+  channelDonutCenter: {
+
+    position: "absolute",
+
+    inset: 0,
+
+    display: "flex",
+
+    flexDirection: "column",
+
+    alignItems: "center",
+
+    justifyContent: "center",
+
+    pointerEvents: "none",
+
+  },
+
+  channelDonutTotal: {
+
+    color: "#0f172a",
+
+    fontSize: "30px",
+
+    fontWeight: "900",
+
+    lineHeight: 1,
+
+  },
+
+  channelDonutLabel: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+    marginTop: "4px",
+
+  },
+
+  channelLegendList: {
+
+    display: "grid",
+
+    gap: "10px",
+
+  },
+
+  channelLegendButton: {
+
+    width: "100%",
+
+    border: "1px solid #d8f3df",
+
+    background: "#f0fdf4",
+
+    borderRadius: "14px",
+
+    padding: "10px 12px",
+
+    display: "grid",
+
+    gridTemplateColumns: "12px 1fr auto auto",
+
+    alignItems: "center",
+
+    gap: "10px",
+
+    cursor: "pointer",
+
+    transition: "all 0.2s ease",
+
+  },
+
+  channelLegendDot: {
+
+    width: "10px",
+
+    height: "10px",
+
+    borderRadius: "50%",
+
+  },
+
+  channelLegendName: {
+
+    color: "#0f172a",
+
+    fontSize: "13px",
+
+    fontWeight: "800",
+
+    textAlign: "left",
+
+  },
+
+  channelLegendValue: {
+
+    color: "#0f172a",
+
+    fontSize: "14px",
+
+    fontWeight: "900",
+
+  },
+
+  channelLegendPercent: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+    minWidth: "34px",
+
+    textAlign: "right",
+
+  },
+
+  urgencyList: {
+
+    display: "grid",
+
+    gap: "14px",
+
+  },
+
+  urgencyPanel: {
+
+    display: "grid",
+
+    gap: "16px",
+
+  },
+
+  urgencyCurvePanel: {
+
+    display: "grid",
+
+    gap: "18px",
+
+  },
+
+  urgencyCurveSummary: {
+
+    display: "grid",
+
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+
+    gap: "10px",
+
+  },
+
+  urgencyCurveMetric: {
+
+    minWidth: 0,
+
+    border: "1px solid #d8f3df",
+
+    background: "#f8fafc",
+
+    borderRadius: "16px",
+
+    padding: "12px",
+
+    display: "grid",
+
+    gridTemplateColumns: "10px 1fr",
+
+    alignItems: "center",
+
+    columnGap: "8px",
+
+    rowGap: "4px",
+
+  },
+
+  urgencyCurveDot: {
+
+    width: "10px",
+
+    height: "10px",
+
+    borderRadius: "50%",
+
+  },
+
+  urgencyCurveLabel: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyCurveValue: {
+
+    gridColumn: "1 / -1",
+
+    color: "#0f172a",
+
+    fontSize: "28px",
+
+    lineHeight: 1,
+
+    fontWeight: "900",
+
+  },
+
+  urgencyCurvePercent: {
+
+    gridColumn: "1 / -1",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyCurveChart: {
+
+    height: "245px",
+
+  },
+
+  urgency3dPanel: {
+
+    minHeight: "390px",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "center",
+
+    overflow: "hidden",
+
+  },
+
+  urgency3dSvg: {
+
+    width: "100%",
+
+    maxWidth: "720px",
+
+    height: "390px",
+
+    display: "block",
+
+  },
+
+  urgency3dLabel: {
+
+    fill: "#475569",
+
+    fontSize: "26px",
+
+    fontWeight: "500",
+
+  },
+
+  urgency3dValue: {
+
+    fontSize: "28px",
+
+    fontWeight: "800",
+
+  },
+
+  urgencyProHeader: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    gap: "16px",
+
+    paddingBottom: "14px",
+
+    borderBottom: "1px solid #e5e7eb",
+
+  },
+
+  urgencyProEyebrow: {
+
+    display: "block",
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+    textTransform: "uppercase",
+
+  },
+
+  urgencyProTotal: {
+
+    display: "block",
+
+    marginTop: "6px",
+
+    color: "#0f172a",
+
+    fontSize: "34px",
+
+    lineHeight: 1,
+
+    fontWeight: "900",
+
+  },
+
+  urgencyRiskBadge: {
+
+    minWidth: "132px",
+
+    border: "1px solid #fecaca",
+
+    background: "#fff7ed",
+
+    borderRadius: "16px",
+
+    padding: "12px 14px",
+
+    textAlign: "right",
+
+  },
+
+  urgencyRiskValue: {
+
+    display: "block",
+
+    color: "#dc2626",
+
+    fontSize: "22px",
+
+    fontWeight: "900",
+
+    lineHeight: 1,
+
+  },
+
+  urgencyRiskLabel: {
+
+    display: "block",
+
+    marginTop: "5px",
+
+    color: "#64748b",
+
+    fontSize: "11px",
+
+    fontWeight: "900",
+
+    textTransform: "uppercase",
+
+  },
+
+  urgencyProRows: {
+
+    display: "grid",
+
+    gap: "16px",
+
+  },
+
+  urgencyProRow: {
+
+    display: "grid",
+
+    gap: "9px",
+
+  },
+
+  urgencyProRowTop: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    gap: "14px",
+
+  },
+
+  urgencyProTrack: {
+
+    height: "9px",
+
+    background: "#edf2f7",
+
+    borderRadius: "999px",
+
+    overflow: "hidden",
+
+  },
+
+  urgencyProFill: {
+
+    height: "100%",
+
+    borderRadius: "999px",
+
+  },
+
+  urgencyOverview: {
+
+    display: "grid",
+
+    gridTemplateColumns: "1.1fr 1fr",
+
+    gap: "14px",
+
+  },
+
+  urgencyMainMetric: {
+
+    minHeight: "126px",
+
+    borderRadius: "20px",
+
+    padding: "18px",
+
+    background: "linear-gradient(135deg, #fff7ed, #fef2f2)",
+
+    border: "1px solid #fed7aa",
+
+    display: "flex",
+
+    flexDirection: "column",
+
+    justifyContent: "center",
+
+  },
+
+  urgencyMetricLabel: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+    textTransform: "uppercase",
+
+  },
+
+  urgencyMetricValue: {
+
+    color: "#0f172a",
+
+    fontSize: "44px",
+
+    fontWeight: "900",
+
+    lineHeight: 1,
+
+    margin: "10px 0",
+
+  },
+
+  urgencyMetricChip: {
+
+    width: "390px",
+
+    borderRadius: "999px",
+
+    padding: "6px 10px",
 
     background: "#ffffff",
 
-    borderRadius: "28px",
+    color: "#e97667",
 
-    padding: "26px",
+    fontSize: "12px",
 
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.07)",
+    fontWeight: "900",
+
+    border: "1px solid #fecaca",
+
+  },
+
+  urgencyMiniGrid: {
+
+    display: "grid",
+
+    gap: "12px",
+
+  },
+
+  urgencyMiniCard: {
+
+    border: "1px solid #d8f3df",
+
+    background: "#f8fafc",
+
+    borderRadius: "18px",
+
+    padding: "14px",
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+  },
+
+  urgencyMiniLabel: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyMiniValue: {
+
+    color: "#0f172a",
+
+    fontSize: "24px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyStack: {
+
+    display: "flex",
+
+    height: "16px",
+
+    overflow: "hidden",
+
+    borderRadius: "999px",
+
+    background: "#e5e7eb",
+
+  },
+
+  urgencyStackSegment: {
+
+    height: "100%",
+
+  },
+
+  urgencyRowsPro: {
+
+    display: "grid",
+
+    gap: "10px",
+
+  },
+
+  urgencyRowPro: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    gap: "14px",
+
+    padding: "12px 14px",
+
+    border: "1px solid #e5e7eb",
+
+    background: "#ffffff",
+
+    borderRadius: "16px",
+
+  },
+
+  urgencyRowLeft: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    gap: "10px",
+
+  },
+
+  urgencyDot: {
+
+    width: "10px",
+
+    height: "10px",
+
+    borderRadius: "50%",
+
+  },
+
+  urgencyRowLabel: {
+
+    color: "#0f172a",
+
+    fontSize: "13px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyRowRight: {
+
+    display: "flex",
+
+    alignItems: "baseline",
+
+    gap: "10px",
+
+  },
+
+  urgencyRowValue: {
+
+    color: "#0f172a",
+
+    fontSize: "15px",
+
+    fontWeight: "900",
+
+  },
+
+  urgencyRowPercent: {
+
+    color: "#64748b",
+
+    fontSize: "12px",
+
+    fontWeight: "900",
+
+    minWidth: "34px",
+
+    textAlign: "right",
+
+  },
+
+  urgencyRow: {
+
+    display: "grid",
+
+    gridTemplateColumns: "1fr auto",
+
+    alignItems: "center",
+
+    columnGap: "14px",
+
+    rowGap: "8px",
+
+  },
+
+  urgencyHeader: {
+
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    gap: "12px",
+
+  },
+
+  urgencyPill: {
+
+    borderRadius: "999px",
+
+    padding: "7px 12px",
+
+    fontSize: "12px",
+
+    fontWeight: "800",
+
+  },
+
+  urgencyValue: {
+
+    color: "#0f172a",
+
+    fontSize: "16px",
+
+  },
+
+  urgencyTrack: {
+
+    gridColumn: "1",
+
+    height: "10px",
+
+    background: "#e5e7eb",
+
+    borderRadius: "999px",
+
+    overflow: "hidden",
+
+  },
+
+  urgencyFill: {
+
+    height: "100%",
+
+    borderRadius: "999px",
+
+    transition: "width 0.25s ease",
+
+  },
+
+  urgencyPercent: {
+
+    gridColumn: "2",
+
+    gridRow: "1 / span 2",
+
+    color: "#64748b",
+
+    fontSize: "13px",
+
+    fontWeight: "800",
+
+  },
+
+  maeMapSection: {
+
+    background: "rgba(255, 255, 255, 0.95)",
+
+    borderRadius: "18px",
+
+    padding: "18px",
+
+    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.07)",
 
   },
 
@@ -4287,11 +6265,11 @@ const styles = {
 
     flex: 1,
 
-    height: "18px",
+    height: "14px",
 
     background: "#eef3fb",
 
-    borderRadius: "8px",
+    borderRadius: "999px",
 
     overflow: "hidden",
 
@@ -4303,7 +6281,7 @@ const styles = {
 
     height: "100%",
 
-    borderRadius: "8px",
+    borderRadius: "999px",
 
     transition: "all 0.25s ease",
 
@@ -4569,6 +6547,20 @@ const styles = {
 
   },
 
+  dateRangeWrapperCompact: {
+
+    minWidth: 0,
+
+    width: "100%",
+
+  },
+
+  dateRangeWrapperCalendarOpen: {
+
+    zIndex: 5001,
+
+  },
+
 
 
   dateRangeButton: {
@@ -4577,9 +6569,9 @@ const styles = {
 
     borderRadius: "14px",
 
-    border: "1px solid #e2e8f0",
+    border: "1px solid #bbf7d0",
 
-    background: "#f8fafc",
+    background: "#f0fdf4",
 
     padding: "0 14px",
 
@@ -4599,23 +6591,43 @@ const styles = {
 
     position: "absolute",
 
-    top: "70px",
+    top: "64px",
 
     left: 0,
 
-    zIndex: 1000,
+    zIndex: 5002,
 
-    width: "350px",
+    width: "390px",
+
+    boxSizing: "border-box",
 
     background: "#ffffff",
 
     borderRadius: "22px",
 
-    padding: "14px",
+    padding: "12px",
 
     boxShadow: "0 18px 40px rgba(15, 23, 42, 0.16)",
 
     border: "1px solid #e2e8f0",
+
+  },
+
+  calendarDropdownCompact: {
+
+    boxSizing: "border-box",
+
+  },
+
+  calendarDropdownMobile: {
+
+    position: "static",
+
+    width: "100%",
+
+    marginTop: "8px",
+
+    padding: "10px",
 
   },
 
@@ -4647,7 +6659,7 @@ const styles = {
 
     border: "none",
 
-    background: "#166534",
+    background: "linear-gradient(135deg, #166534, #3f8d69)",
 
     color: "#ffffff",
 
@@ -4677,13 +6689,15 @@ const styles = {
 
     position: "relative",
 
+    zIndex: 7002,
+
     display: "flex",
 
     flexDirection: "column",
 
     gap: "6px",
 
-    minWidth: "180px",
+    minWidth: "190px",
 
   },
 
@@ -4777,9 +6791,9 @@ const styles = {
 
     borderRadius: "16px",
 
-    border: "1px solid #e2e8f0",
+    border: "1px solid #bbf7d0",
 
-    background: "#f8fafc",
+    background: "#f0fdf4",
 
     padding: "0 14px",
 
@@ -4811,9 +6825,13 @@ const styles = {
 
     left: 0,
 
-    width: "100%",
+    minWidth: "100%",
 
-    zIndex: 2000,
+    width: "max-content",
+
+    maxWidth: "260px",
+
+    zIndex: 7003,
 
     background: "#ffffff",
 
@@ -4842,6 +6860,10 @@ const styles = {
     borderRadius: "12px",
 
     textAlign: "left",
+
+    whiteSpace: "nowrap",
+
+    lineHeight: 1.2,
 
     cursor: "pointer",
 
@@ -4927,15 +6949,15 @@ const styles = {
 
     borderRadius: "999px",
 
-    border: "1px solid #e5e7eb",
+    border: "1px solid #d8f3df",
 
-    background: "#ffffff",
+    background: "rgba(255, 255, 255, 0.9)",
 
     color: "#475569",
 
     fontSize: "14px",
 
-    fontWeight: "600",
+    fontWeight: "800",
 
     cursor: "pointer",
 
@@ -4957,11 +6979,11 @@ const styles = {
 
   activeTab: {
 
-    background: "#eff6ff",
+    background: "#ecfdf5",
 
-    color: "#2563eb",
+    color: "#166534",
 
-    border: "1px solid #bfdbfe",
+    border: "1px solid #86efac",
 
   },
 
@@ -4969,13 +6991,15 @@ const styles = {
 
   card: {
 
-    background: "#ffffff",
+    background: "rgba(255, 255, 255, 0.95)",
 
-    borderRadius: "24px",
+    borderRadius: "18px",
 
-    padding: "22px",
+    padding: "18px",
 
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+    border: "1px solid rgba(22, 101, 52, 0.12)",
+
+    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.07)",
 
     overflow: "visible",
 
@@ -5025,11 +7049,11 @@ const styles = {
 
     background: "#ffffff",
 
-    borderRadius: "24px",
+    borderRadius: "18px",
 
-    padding: "24px",
+    padding: "18px",
 
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.07)",
 
   },
 
@@ -5043,15 +7067,15 @@ const styles = {
 
     background: "#ffffff",
 
-    borderRadius: "28px",
+    borderRadius: "18px",
 
-    padding: "26px",
+    padding: "18px",
 
-    marginTop: "24px",
+    marginTop: "16px",
 
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.07)",
+    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.07)",
 
-    border: "1px solid #e2e8f0",
+    border: "1px solid rgba(22, 101, 52, 0.12)",
 
   },
 
@@ -5087,7 +7111,7 @@ const styles = {
 
   mapBadge: {
 
-    background: "#dcfce7",
+    background: "#ecfdf5",
 
     color: "#166534",
 
@@ -5121,7 +7145,7 @@ const styles = {
 
     overflow: "hidden",
 
-    border: "1px solid #dcfce7",
+    border: "1px solid #bbf7d0",
 
   },
 
@@ -5195,7 +7219,7 @@ const styles = {
 
   mapBadge: {
 
-    background: "#dcfce7",
+    background: "#ecfdf5",
 
     color: "#166534",
 
@@ -5229,7 +7253,7 @@ const styles = {
 
     overflow: "hidden",
 
-    border: "1px solid #dcfce7",
+    border: "1px solid #bbf7d0",
 
   },
 
@@ -5437,13 +7461,13 @@ const styles = {
 
     background: "#ffffff",
 
-    borderRadius: "24px",
+    borderRadius: "18px",
 
-    padding: "24px",
+    padding: "18px",
 
-    marginTop: "24px",
+    marginTop: "16px",
 
-    boxShadow: "0 16px 40px rgba(15, 23, 42, 0.07)",
+    boxShadow: "0 14px 34px rgba(15, 23, 42, 0.07)",
 
     border: "1px solid #e2e8f0",
 
@@ -5718,6 +7742,10 @@ const styles = {
     borderRadius: "20px",
 
     padding: "12px",
+
+    width: "100%",
+
+    boxSizing: "border-box",
 
   },
 

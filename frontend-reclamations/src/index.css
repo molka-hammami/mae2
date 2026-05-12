@@ -25,6 +25,25 @@
 .rdrDayToday .rdrDayNumber span:after {
   background: #166534;
 }
+
+.rdrDateRangeWrapper,
+.rdrCalendarWrapper,
+.rdrMonths {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.rdrMonth {
+  width: 100% !important;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.rdrWeekDays,
+.rdrDays {
+  width: 100%;
+}
+
 body {
   font-family: "Montserrat", sans-serif;
 }
@@ -60,6 +79,20 @@ body.light {
 
 body.dark {
   background-color: #020617;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.62;
+  }
 }
 
 body.dark .rdrCalendarWrapper,
