@@ -24,7 +24,7 @@ function Sidebar() {
         <div style={styles.sectionTitle}>Menu principal</div>
 
         <nav style={styles.nav}>
-          <MenuLink to="/dashboard" icon={<FiHome />} label="Dashboard" />
+          <MenuLink to="/dashboard" icon={<FiHome />} label="Tableau de bord" />
           <MenuLink to="/complaints" icon={<FiFileText />} label="Réclamations" />
 
           {user?.role === "ADMIN" && (

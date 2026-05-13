@@ -232,8 +232,8 @@ function ComplaintsPage() {
               onToggle={() => setShowPeriodCalendar((prev) => !prev)}
               onChange={(selection) => {
                 setRange([selection]);
-                updateFilter("startDate", selection.startDate.toISOString().split("T")[0]);
-                updateFilter("endDate", selection.endDate.toISOString().split("T")[0]);
+                updateFilter("startDate", formatLocalDate(selection.startDate));
+                updateFilter("endDate", formatLocalDate(selection.endDate));
               }}
               onApply={() => setShowPeriodCalendar(false)}
               isDark={isDark}
@@ -442,6 +442,13 @@ function normalize(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+}
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function parseDate(value) {

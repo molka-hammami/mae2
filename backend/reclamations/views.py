@@ -213,6 +213,12 @@ def classify_reclamation(request, pk):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    if reclamation.status in ("TRAITEE", "TRAITÉE"):
+        return Response(
+            {"error": "Cette reclamation est deja traitee. Sa categorie ne peut plus etre changee."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     annotation = reclamation.comment.annotation
     annotation.category = category
     annotation.category_assigned_by_admin = True

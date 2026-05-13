@@ -395,8 +395,6 @@ function DashboardPage() {
 
 
 
-  const statusOptions = ["Tous", "EN_ATTENTE", "EN_COURS", "TRAITEE"];
-
   const periodOptions = ["30 derniers jours", "7 derniers jours", "Aujourd'hui"];
 
   const tabCounts = useMemo(() => {
@@ -919,16 +917,143 @@ function DashboardPage() {
       <!doctype html>
       <html>
         <head>
-          <title>Dashboard Réclamations</title>
+          <title>Rapport des réclamations</title>
           <style>
-            body { font-family: Arial, sans-serif; color: #0f172a; margin: 28px; }
-            h1 { margin: 0 0 12px; color: #166534; }
-            .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
-            .stat { border: 1px solid #dbe4ee; border-radius: 12px; padding: 12px; }
-            .stat strong { display: block; font-size: 24px; margin-top: 6px; }
-            table { border-collapse: collapse; width: 100%; font-size: 12px; }
-            th, td { border: 1px solid #dbe4ee; padding: 8px; text-align: left; vertical-align: top; }
-            th { background: #f0fdf4; color: #166534; }
+            @page { size: A4 landscape; margin: 12mm; }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              background: #f8fafc;
+              color: #0f172a;
+              font-family: "Segoe UI", Arial, sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .report {
+              max-width: 1180px;
+              margin: 0 auto;
+              padding: 24px;
+              background: #ffffff;
+            }
+            .report-header {
+              display: flex;
+              align-items: flex-end;
+              justify-content: space-between;
+              gap: 18px;
+              padding: 18px 20px;
+              border: 1px solid #bbf7d0;
+              border-radius: 18px;
+              background: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 100%);
+              margin-bottom: 16px;
+            }
+            .report-kicker {
+              margin: 0 0 6px;
+              color: #166534;
+              font-size: 11px;
+              font-weight: 800;
+              letter-spacing: 0;
+              text-transform: uppercase;
+            }
+            h1 {
+              margin: 0;
+              color: #0f172a;
+              font-size: 28px;
+              line-height: 1.1;
+            }
+            .report-date {
+              white-space: nowrap;
+              border: 1px solid #bbf7d0;
+              border-radius: 999px;
+              background: #ffffff;
+              color: #166534;
+              padding: 8px 12px;
+              font-size: 12px;
+              font-weight: 800;
+            }
+            .stats {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10px;
+              margin: 0 0 16px;
+            }
+            .stat {
+              border: 1px solid #dbe4ee;
+              border-radius: 14px;
+              padding: 12px 14px;
+              background: #ffffff;
+            }
+            .stat span {
+              display: block;
+              color: #64748b;
+              font-size: 11px;
+              font-weight: 800;
+              text-transform: uppercase;
+            }
+            .stat strong {
+              display: block;
+              margin-top: 5px;
+              color: #0f172a;
+              font-size: 24px;
+              line-height: 1;
+            }
+            .table-wrap {
+              overflow: hidden;
+              border: 1px solid #dbe4ee;
+              border-radius: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: fixed;
+              background: #ffffff;
+              font-size: 11px;
+            }
+            thead { display: table-header-group; }
+            tr { break-inside: avoid; page-break-inside: avoid; }
+            th {
+              background: #166534;
+              color: #ffffff;
+              padding: 9px 8px;
+              text-align: left;
+              font-size: 10px;
+              font-weight: 900;
+              text-transform: uppercase;
+            }
+            td {
+              border-top: 1px solid #e2e8f0;
+              padding: 8px;
+              vertical-align: top;
+              line-height: 1.25;
+              word-break: break-word;
+            }
+            tbody tr:nth-child(even) td { background: #f8fafc; }
+            .col-id { width: 5%; }
+            .col-client { width: 12%; }
+            .col-canal { width: 8%; }
+            .col-date { width: 9%; }
+            .col-category { width: 12%; }
+            .col-status { width: 9%; }
+            .col-urgency { width: 8%; }
+            .col-complaint { width: 37%; }
+            .badge {
+              display: inline-block;
+              border-radius: 999px;
+              padding: 4px 8px;
+              font-size: 10px;
+              font-weight: 800;
+              white-space: nowrap;
+            }
+            .status-done { background: #dcfce7; color: #166534; }
+            .status-progress { background: #fef3c7; color: #92400e; }
+            .status-waiting { background: #fee2e2; color: #b91c1c; }
+            .urgency-low { background: #dcfce7; color: #166534; }
+            .urgency-medium { background: #fef3c7; color: #92400e; }
+            .urgency-high { background: #fee2e2; color: #b91c1c; }
+            @media print {
+              body { background: #ffffff; }
+              .report { max-width: none; padding: 0; }
+              .report-header, .stat, .table-wrap { box-shadow: none; }
+            }
           </style>
         </head>
         <body>
@@ -968,7 +1093,7 @@ function DashboardPage() {
 
             <div>
 
-              <h1 style={{ ...styles.dashboardTitle, ...(isDark ? styles.darkTitle : {}) }}>Dashboard Réclamations</h1>
+              <h1 style={{ ...styles.dashboardTitle, ...(isDark ? styles.darkTitle : {}) }}>Exports des réclamations</h1>
 
             </div>
 
@@ -1037,11 +1162,17 @@ function DashboardPage() {
 
                 >
 
-                  {startDate && endDate
+                  <span>
 
-                    ? `${startDate} - ${endDate}`
+                    {startDate && endDate
 
-                    : "Choisir une période"}
+                      ? `${startDate} - ${endDate}`
+
+                      : "Choisir une période"}
+
+                  </span>
+
+                  <FiChevronDown />
 
                 </button>
 
@@ -1077,9 +1208,9 @@ function DashboardPage() {
 
                           setRange([item.selection]);
 
-                          setStartDate(item.selection.startDate.toISOString().split("T")[0]);
+                          setStartDate(formatLocalDate(item.selection.startDate));
 
-                          setEndDate(item.selection.endDate.toISOString().split("T")[0]);
+                          setEndDate(formatLocalDate(item.selection.endDate));
 
                         }}
 
@@ -1140,33 +1271,6 @@ function DashboardPage() {
                 onClose={() => setOpenFilter(null)}
 
               />
-
-
-
-              <CompactFilter
-
-                label="Statut"
-
-                value={statusFilter}
-
-                onChange={(value) => runWithLoader(() => setStatusFilter(value))}
-
-                options={statusOptions}
-
-                isOpen={openFilter === "status"}
-
-                onToggle={() => {
-                  setShowCalendar(false);
-                  setOpenFilter((prev) => (prev === "status" ? null : "status"));
-                }}
-
-                onClose={() => setOpenFilter(null)}
-
-              />
-
-
-
-
 
 
 
@@ -1393,7 +1497,7 @@ function DashboardPage() {
 
               <div style={styles.chartTitleRow}>
 
-                <h3 style={{ ...styles.cardTitle, ...(isDark ? styles.darkTitle : {}) }}>Répartition par Canal</h3>
+                <h3 style={{ ...styles.cardTitle, ...styles.channelCardTitle, ...(isDark ? styles.darkTitle : {}) }}>Répartition par Canal</h3>
 
 
 
@@ -1432,6 +1536,10 @@ function DashboardPage() {
                   }
 
                   isDark={isDark}
+
+                  compact={isCompactDashboard}
+
+                  mobile={isMobileDashboard}
 
                 />
 
@@ -2807,67 +2915,11 @@ function ChannelDonut({
 
 }
 
-function ChannelDistribution({ data, selectedChannel, onSelect, isDark }) {
-
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+function ChannelDistribution({ data, selectedChannel, onSelect, isDark, compact, mobile }) {
 
   return (
 
     <div style={styles.channelDistribution}>
-
-      <div style={styles.channelDistributionHeader}>
-
-        <div>
-
-          <span style={{ ...styles.channelDistributionEyebrow, ...(isDark ? styles.darkMutedText : {}) }}>Total canaux</span>
-
-          <strong style={{ ...styles.channelDistributionTotal, ...(isDark ? styles.darkTitle : {}) }}>{total}</strong>
-
-        </div>
-
-        <span style={styles.channelDistributionBadge}>{data.length} sources</span>
-
-      </div>
-
-      <div style={styles.channelStackTrack}>
-
-        {data.map((item) => {
-
-          const isActive = selectedChannel === "Tous" || selectedChannel === item.label;
-
-          return (
-
-            <button
-
-              key={item.label}
-
-              type="button"
-
-              aria-label={item.label}
-
-              title={`${item.label}: ${item.value} (${item.percent})`}
-
-              style={{
-
-                ...styles.channelStackSegment,
-
-                width: item.width,
-
-                background: getChannelColor(item.label),
-
-                opacity: isActive ? 1 : 0.32,
-
-              }}
-
-              onClick={() => onSelect(item.label)}
-
-            />
-
-          );
-
-        })}
-
-      </div>
 
       <div style={styles.channelDistributionRows}>
 
@@ -2887,7 +2939,9 @@ function ChannelDistribution({ data, selectedChannel, onSelect, isDark }) {
 
                 ...styles.channelDistributionRow,
 
-                ...(isDark ? styles.darkButtonControl : {}),
+                ...(compact ? styles.channelDistributionRowCompact : {}),
+
+                ...(mobile ? styles.channelDistributionRowMobile : {}),
 
                 opacity: isActive ? 1 : 0.55,
 
@@ -2896,20 +2950,23 @@ function ChannelDistribution({ data, selectedChannel, onSelect, isDark }) {
               onClick={() => onSelect(item.label)}
 
             >
+              <span style={getChannelBadgeStyle(item.label, mobile)}>{item.label}</span>
 
-              <span
+              <span style={{ ...styles.channelDistributionTrack, ...(mobile ? styles.channelDistributionTrackMobile : {}), ...(isDark ? styles.darkChannelTrack : {}) }}>
 
-                style={{
+                <span
 
-                  ...styles.channelDistributionDot,
+                  style={{
 
-                  background: getChannelColor(item.label),
+                    ...styles.channelDistributionFill,
 
-                }}
+                    width: item.width,
 
-              />
+                  }}
 
-              <span style={{ ...styles.channelDistributionName, ...(isDark ? styles.darkTitle : {}) }}>{item.label}</span>
+                />
+
+              </span>
 
               <strong style={{ ...styles.channelDistributionValue, ...(isDark ? styles.darkTitle : {}) }}>{item.value}</strong>
 
@@ -3087,6 +3144,18 @@ function parseDate(dateString) {
 
 }
 
+function formatLocalDate(date) {
+
+  const year = date.getFullYear();
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+
+}
+
 function formatSource(source) {
 
   if (!source) return "Inconnu";
@@ -3151,32 +3220,54 @@ function buildExportTableHtml(rows, stats, pdfMode = false) {
 
     .map(
 
-      (row) => `
+      (row) => {
+        const statusClass = getExportStatusClass(row.statut);
+        const urgencyClass = getExportUrgencyClass(row.urgence);
+
+        return `
         <tr>
           <td>${escapeHtml(row.id)}</td>
           <td>${escapeHtml(row.client)}</td>
           <td>${escapeHtml(row.canal)}</td>
           <td>${escapeHtml(row.date)}</td>
           <td>${escapeHtml(row.categorie)}</td>
-          <td>${escapeHtml(row.statut)}</td>
-          <td>${escapeHtml(row.urgence)}</td>
+          <td><span class="badge ${statusClass}">${escapeHtml(row.statut)}</span></td>
+          <td><span class="badge ${urgencyClass}">${escapeHtml(row.urgence)}</span></td>
           <td>${escapeHtml(row.reclamation)}</td>
-        </tr>`
+        </tr>`;
+      }
 
     )
 
     .join("");
 
   return `
-    <h1>Dashboard Réclamations</h1>
-    <p>Export généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}</p>
+    <main class="report">
+    <section class="report-header">
+      <div>
+        <p class="report-kicker">Export PDF / Excel</p>
+        <h1>Rapport des réclamations</h1>
+      </div>
+      <div class="report-date">Généré le ${escapeHtml(new Date().toLocaleDateString("fr-FR"))}</div>
+    </section>
     <div class="stats">
-      <div class="stat">Total<strong>${escapeHtml(stats.total)}</strong></div>
-      <div class="stat">En cours<strong>${escapeHtml(stats.enCours)}</strong></div>
-      <div class="stat">Traitées<strong>${escapeHtml(stats.traitees)}</strong></div>
-      <div class="stat">En attente<strong>${escapeHtml(stats.enAttente)}</strong></div>
+      <div class="stat"><span>Total</span><strong>${escapeHtml(stats.total)}</strong></div>
+      <div class="stat"><span>En cours</span><strong>${escapeHtml(stats.enCours)}</strong></div>
+      <div class="stat"><span>Traitées</span><strong>${escapeHtml(stats.traitees)}</strong></div>
+      <div class="stat"><span>En attente</span><strong>${escapeHtml(stats.enAttente)}</strong></div>
     </div>
+    <div class="table-wrap">
     <table ${pdfMode ? "" : 'border="1"'}>
+      <colgroup>
+        <col class="col-id" />
+        <col class="col-client" />
+        <col class="col-canal" />
+        <col class="col-date" />
+        <col class="col-category" />
+        <col class="col-status" />
+        <col class="col-urgency" />
+        <col class="col-complaint" />
+      </colgroup>
       <thead>
         <tr>
           <th>ID</th>
@@ -3190,7 +3281,33 @@ function buildExportTableHtml(rows, stats, pdfMode = false) {
         </tr>
       </thead>
       <tbody>${tableRows}</tbody>
-    </table>`;
+    </table>
+    </div>
+    </main>`;
+
+}
+
+function getExportStatusClass(status) {
+
+  if (status === "Traitée") return "status-done";
+
+  if (status === "En cours") return "status-progress";
+
+  if (status === "En attente") return "status-waiting";
+
+  return "";
+
+}
+
+function getExportUrgencyClass(urgency) {
+
+  if (urgency === "Faible") return "urgency-low";
+
+  if (urgency === "Moyenne") return "urgency-medium";
+
+  if (urgency === "Élevée") return "urgency-high";
+
+  return "";
 
 }
 
@@ -3224,25 +3341,27 @@ function downloadFile(filename, content, type) {
 
 
 
-function getChannelBadgeStyle(label) {
+function getChannelBadgeStyle(label, compact = false) {
 
   return {
 
     display: "inline-block",
 
-    minWidth: "88px",
+    width: compact ? "128px" : "150px",
 
     textAlign: "center",
 
-    padding: "7px 13px",
+    padding: compact ? "9px 12px" : "10px 14px",
 
-    borderRadius: "12px",
+    borderRadius: "13px",
 
     color: "#fff",
 
-    fontWeight: "700",
+    fontWeight: "900",
 
-    fontSize: "13px",
+    fontSize: compact ? "15px" : "17px",
+
+    lineHeight: 1,
 
     background:
 
@@ -3252,7 +3371,9 @@ function getChannelBadgeStyle(label) {
 
         : "linear-gradient(135deg, #1d4ed8, #38bdf8)",
 
-    boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
+    boxShadow: "0 14px 26px rgba(37, 99, 235, 0.2)",
+
+    boxSizing: "border-box",
 
     transition: "all 0.25s ease",
 
@@ -4010,13 +4131,13 @@ const styles = {
 
     alignItems: "center",
 
-    gap: "24px",
+    gap: "14px",
 
     flexWrap: "wrap",
 
-    padding: "18px 22px",
+    padding: "10px 16px",
 
-    borderRadius: "18px",
+    borderRadius: "14px",
 
     background:
 
@@ -4024,7 +4145,7 @@ const styles = {
 
     border: "1px solid rgba(22, 101, 52, 0.14)",
 
-    boxShadow: "0 14px 34px rgba(22, 101, 52, 0.09)",
+    boxShadow: "0 8px 20px rgba(22, 101, 52, 0.08)",
 
   },
 
@@ -4052,11 +4173,11 @@ const styles = {
 
     color: "#111827",
 
-    fontSize: "38px",
+    fontSize: "18px",
 
-    fontWeight: "900",
+    fontWeight: "850",
 
-    lineHeight: 1.05,
+    lineHeight: 1.2,
 
   },
 
@@ -4076,7 +4197,7 @@ const styles = {
 
     display: "flex",
 
-    gap: "10px",
+    gap: "8px",
 
     flexWrap: "wrap",
 
@@ -4118,9 +4239,9 @@ const styles = {
 
   exportButton: {
 
-    height: "40px",
+    height: "34px",
 
-    borderRadius: "12px",
+    borderRadius: "10px",
 
     border: "1px solid #bbf7d0",
 
@@ -4128,13 +4249,13 @@ const styles = {
 
     color: "#166534",
 
-    padding: "0 14px",
+    padding: "0 12px",
 
     display: "inline-flex",
 
     alignItems: "center",
 
-    gap: "8px",
+    gap: "7px",
 
     fontWeight: "900",
 
@@ -4144,9 +4265,9 @@ const styles = {
 
   exportButtonPrimary: {
 
-    height: "40px",
+    height: "34px",
 
-    borderRadius: "12px",
+    borderRadius: "10px",
 
     border: "1px solid #166534",
 
@@ -4154,13 +4275,13 @@ const styles = {
 
     color: "#ffffff",
 
-    padding: "0 14px",
+    padding: "0 12px",
 
     display: "inline-flex",
 
     alignItems: "center",
 
-    gap: "8px",
+    gap: "7px",
 
     fontWeight: "900",
 
@@ -4897,7 +5018,9 @@ const styles = {
 
     minHeight: "0",
 
-    padding: "20px 22px 22px",
+    padding: "24px 28px 30px",
+
+    borderRadius: "22px",
 
   },
 
@@ -4931,7 +5054,7 @@ const styles = {
 
     justifyContent: "space-between",
 
-    marginBottom: "12px",
+    marginBottom: "16px",
 
   },
 
@@ -4946,6 +5069,12 @@ const styles = {
     color: "#111827",
 
     fontWeight: "900",
+
+  },
+
+  channelCardTitle: {
+
+    fontSize: "21px",
 
   },
 
@@ -5189,7 +5318,7 @@ const styles = {
 
     display: "grid",
 
-    gap: "14px",
+    gap: "0",
 
   },
 
@@ -5281,7 +5410,7 @@ const styles = {
 
     display: "grid",
 
-    gap: "10px",
+    gap: "16px",
 
   },
 
@@ -5289,27 +5418,43 @@ const styles = {
 
     width: "100%",
 
-    border: "1px solid #bbf7d0",
+    border: "0",
 
-    background: "#f0fdf4",
+    background: "transparent",
 
-    borderRadius: "14px",
+    borderRadius: "0",
 
-    padding: "11px 12px",
+    padding: "0",
 
     display: "grid",
 
-    gridTemplateColumns: "10px 1fr auto auto",
+    gridTemplateColumns: "150px minmax(160px, 1fr) 38px 54px",
 
     alignItems: "center",
 
-    gap: "10px",
+    gap: "18px",
 
     cursor: "pointer",
 
     textAlign: "left",
 
     transition: "all 0.2s ease",
+
+  },
+
+  channelDistributionRowCompact: {
+
+    gridTemplateColumns: "minmax(120px, 150px) minmax(120px, 1fr) 34px 48px",
+
+    gap: "12px",
+
+  },
+
+  channelDistributionRowMobile: {
+
+    gridTemplateColumns: "1fr auto auto",
+
+    gap: "10px",
 
   },
 
@@ -5333,25 +5478,67 @@ const styles = {
 
   },
 
+  channelDistributionTrack: {
+
+    width: "100%",
+
+    height: "22px",
+
+    background: "#edf3fc",
+
+    borderRadius: "999px",
+
+    overflow: "hidden",
+
+    display: "block",
+
+  },
+
+  channelDistributionTrackMobile: {
+
+    gridColumn: "1 / -1",
+
+    gridRow: "2",
+
+  },
+
+  channelDistributionFill: {
+
+    height: "100%",
+
+    minWidth: "14px",
+
+    borderRadius: "999px",
+
+    background: "linear-gradient(90deg, #2768e8 0%, #55a7f5 100%)",
+
+    display: "block",
+
+    transition: "width 0.25s ease",
+
+  },
+
   channelDistributionValue: {
 
-    color: "#0f172a",
+    color: "#162238",
 
-    fontSize: "15px",
+    fontSize: "18px",
 
     fontWeight: "900",
+
+    textAlign: "right",
 
   },
 
   channelDistributionPercent: {
 
-    color: "#166534",
+    color: "#7084a3",
 
-    fontSize: "12px",
+    fontSize: "18px",
 
-    fontWeight: "800",
+    fontWeight: "900",
 
-    minWidth: "34px",
+    minWidth: "42px",
 
     textAlign: "right",
 
@@ -6583,6 +6770,16 @@ const styles = {
 
     cursor: "pointer",
 
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent: "space-between",
+
+    gap: "10px",
+
+    width: "100%",
+
   },
 
 
@@ -6760,6 +6957,12 @@ const styles = {
     border: "1px solid #334155",
 
     color: "#e2e8f0",
+
+  },
+
+  darkChannelTrack: {
+
+    background: "#1e293b",
 
   },
 

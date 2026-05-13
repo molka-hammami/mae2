@@ -13,8 +13,10 @@ const isDark = theme === "dark";
   const [error, setError] = useState("");
 
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [isEditingClassification, setIsEditingClassification] = useState(false);
   const [adminNote, setAdminNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const [internalNote, setInternalNote] = useState("");
   const [savingInternalNote, setSavingInternalNote] = useState(false);
@@ -25,6 +27,10 @@ const isDark = theme === "dark";
     "SERVICE CLIENT",
     "SINISTRE IRDS",
   ];
+
+  const showNotice = (type, message) => {
+    setNotice({ type, message });
+  };
 
   useEffect(() => {
     const loadComplaint = async () => {
@@ -46,6 +52,7 @@ const isDark = theme === "dark";
 
         setComplaint(data);
         setSelectedCategory(data?.category || "");
+        setIsEditingClassification(false);
         setAdminNote(data?.admin_note || "");
         setInternalNote(data?.internal_note || "");
       } catch (err) {
@@ -64,6 +71,11 @@ const isDark = theme === "dark";
     complaint.category === "" ||
     complaint.category === "NON CLASSÉE" ||
     complaint.category === "Non classée";
+
+  const isProcessed = complaint?.status === "TRAITEE" || complaint?.status === "TRAITÉE";
+  const canEditClassification = user?.role === "ADMIN" && !isProcessed;
+  const showClassificationEditor =
+    !isProcessed && (isNotClassified || (canEditClassification && isEditingClassification));
 
   const handleSaveInternalNote = async () => {
     try {
@@ -91,9 +103,9 @@ const isDark = theme === "dark";
       const updatedComplaint = await response.json();
       setComplaint(updatedComplaint);
       setInternalNote(updatedComplaint.internal_note || "");
-      alert("Note agent enregistrée avec succès");
+      showNotice("success", "Note agent enregistrée avec succès.");
     } catch (err) {
-      alert(err.message || "Erreur lors de l'enregistrement");
+      showNotice("error", err.message || "Erreur lors de l'enregistrement.");
     } finally {
       setSavingInternalNote(false);
     }
@@ -121,9 +133,9 @@ const isDark = theme === "dark";
 
       const data = await response.json();
       setComplaint(data);
-      alert("Réclamation marquée comme traitée");
+      showNotice("success", "Réclamation marquée comme traitée.");
     } catch (err) {
-      alert(err.message || "Erreur lors du traitement");
+      showNotice("error", err.message || "Erreur lors du traitement.");
     }
   };
 
@@ -153,17 +165,22 @@ const isDark = theme === "dark";
       const updatedComplaint = await response.json();
       setComplaint(updatedComplaint);
       setAdminNote(updatedComplaint.admin_note || "");
-      alert("Note admin enregistrée avec succès");
+      showNotice("success", "Note admin enregistrée avec succès.");
     } catch (err) {
-      alert(err.message || "Erreur lors de l'enregistrement");
+      showNotice("error", err.message || "Erreur lors de l'enregistrement.");
     } finally {
       setSavingNote(false);
     }
   };
 
   const handleValidateClassification = async () => {
+    if (isProcessed) {
+      showNotice("error", "Cette réclamation est déjà traitée. Sa catégorie ne peut plus être changée.");
+      return;
+    }
+
     if (!selectedCategory) {
-      alert("Veuillez choisir une catégorie.");
+      showNotice("error", "Veuillez choisir une catégorie.");
       return;
     }
 
@@ -190,9 +207,10 @@ const isDark = theme === "dark";
       const updatedComplaint = await response.json();
       setComplaint(updatedComplaint);
       setSelectedCategory(updatedComplaint.category || "");
-      alert("Classification validée avec succès.");
+      setIsEditingClassification(false);
+      showNotice("success", "Classification validée avec succès.");
     } catch (err) {
-      alert(err.message || "Erreur lors de la classification.");
+      showNotice("error", err.message || "Erreur lors de la classification.");
     }
   };
 
@@ -236,6 +254,21 @@ const isDark = theme === "dark";
           <button style={styles.actionsButton}>Actions ⋮</button>
         </div>
       </div>
+
+      {notice && (
+        <div
+          style={{
+            ...styles.notice,
+            ...(notice.type === "success" ? styles.noticeSuccess : styles.noticeError),
+            ...(isDark ? styles.darkNotice : {}),
+          }}
+        >
+          <span>{notice.message}</span>
+          <button type="button" onClick={() => setNotice(null)} style={styles.noticeClose}>
+            ×
+          </button>
+        </div>
+      )}
 
       <div style={styles.mainGrid}>
         <div style={styles.leftColumn}>
@@ -331,9 +364,54 @@ const isDark = theme === "dark";
             />
           </div>
 
-          {isNotClassified && (
+          {!isNotClassified && canEditClassification && !isEditingClassification && (
             <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
-              <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.darkTitle : {}) }}>Classer la réclamation</h2>
+              <div style={styles.classificationHeader}>
+                <div>
+                  <h2 style={{ ...styles.sectionTitleNoMargin, ...(isDark ? styles.darkTitle : {}) }}>
+                    Classification
+                  </h2>
+                  <p style={{ ...styles.classificationHint, ...(isDark ? styles.darkMutedText : {}) }}>
+                    Cette reclamation est deja classee. Vous pouvez changer sa categorie si necessaire.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(complaint.category || "");
+                    setIsEditingClassification(true);
+                  }}
+                  style={styles.editClassificationButton}
+                >
+                  Modifier la classification
+                </button>
+              </div>
+            </div>
+          )}
+
+          {user?.role === "ADMIN" && isProcessed && (
+            <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
+              <div style={styles.classificationHeader}>
+                <div>
+                  <h2 style={{ ...styles.sectionTitleNoMargin, ...(isDark ? styles.darkTitle : {}) }}>
+                    Classification
+                  </h2>
+                  <p style={{ ...styles.classificationHint, ...(isDark ? styles.darkMutedText : {}) }}>
+                    Cette reclamation est deja traitee. Sa categorie est verrouillee.
+                  </p>
+                </div>
+
+                <span style={styles.lockedClassificationBadge}>Verrouillee</span>
+              </div>
+            </div>
+          )}
+
+          {showClassificationEditor && (
+            <div style={{ ...styles.sectionCard, ...(isDark ? styles.darkCard : {}) }}>
+              <h2 style={{ ...styles.sectionTitle, ...(isDark ? styles.darkTitle : {}) }}>
+                {isNotClassified ? "Classer la réclamation" : "Modifier la classification"}
+              </h2>
 
               <div style={styles.classifyRow}>
                 <select
@@ -353,8 +431,21 @@ const isDark = theme === "dark";
                   onClick={handleValidateClassification}
                   style={styles.classifyButton}
                 >
-                  ✓ Valider la classification
+                  {isNotClassified ? "Valider la classification" : "Enregistrer la classification"}
                 </button>
+
+                {!isNotClassified && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory(complaint.category || "");
+                      setIsEditingClassification(false);
+                    }}
+                    style={styles.cancelClassificationButton}
+                  >
+                    Annuler
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -752,6 +843,41 @@ const styles = {
     fontSize: "17px",
   },
 
+  notice: {
+    borderRadius: "14px",
+    padding: "13px 15px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "12px",
+    fontSize: "14px",
+    fontWeight: "800",
+    boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)",
+  },
+
+  noticeSuccess: {
+    background: "#ecfdf5",
+    border: "1px solid #86efac",
+    color: "#166534",
+  },
+
+  noticeError: {
+    background: "#fef2f2",
+    border: "1px solid #fecaca",
+    color: "#b91c1c",
+  },
+
+  noticeClose: {
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    cursor: "pointer",
+    fontSize: "20px",
+    fontWeight: "900",
+    lineHeight: 1,
+    padding: "0 2px",
+  },
+
   link: {
     color: "#2563eb",
     textDecoration: "none",
@@ -887,6 +1013,21 @@ const styles = {
     marginBottom: "14px",
   },
 
+  classificationHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "14px",
+    flexWrap: "wrap",
+  },
+
+  classificationHint: {
+    margin: "8px 0 0",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: 1.5,
+  },
+
   sectionIcon: {
     width: "32px",
     height: "32px",
@@ -900,7 +1041,7 @@ const styles = {
 
   classifyRow: {
     display: "grid",
-    gridTemplateColumns: "1.3fr 0.8fr",
+    gridTemplateColumns: "minmax(220px, 1.3fr) minmax(180px, 0.8fr) auto",
     gap: "14px",
   },
 
@@ -926,6 +1067,40 @@ const styles = {
     borderRadius: "12px",
     backgroundColor: "#15803d",
     color: "#ffffff",
+    fontWeight: "700",
+    fontSize: "15px",
+    cursor: "pointer",
+    padding: "14px 18px",
+  },
+
+  editClassificationButton: {
+    border: "none",
+    borderRadius: "12px",
+    backgroundColor: "#2563eb",
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: "14px",
+    cursor: "pointer",
+    padding: "12px 16px",
+  },
+
+  lockedClassificationBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "999px",
+    backgroundColor: "#e2e8f0",
+    color: "#475569",
+    fontWeight: "800",
+    fontSize: "13px",
+    padding: "9px 13px",
+  },
+
+  cancelClassificationButton: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
+    backgroundColor: "#ffffff",
+    color: "#334155",
     fontWeight: "700",
     fontSize: "15px",
     cursor: "pointer",
@@ -1081,6 +1256,10 @@ darkText: {
 
 darkMutedText: {
   color: "#cbd5e1",
+},
+darkNotice: {
+  backgroundColor: "#111827",
+  boxShadow: "0 16px 36px rgba(0, 0, 0, 0.3)",
 },
   timelineContent: {
     display: "flex",
