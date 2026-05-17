@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiLock, FiLogOut, FiMoon, FiSun, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -11,6 +11,8 @@ function Header() {
 
   const [openMenu, setOpenMenu] = useState(false);
   const [avatar, setAvatar] = useState("");
+  const [isCompact, setIsCompact] = useState(() => window.innerWidth <= 900);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const loadAvatar = () => {
@@ -23,6 +25,37 @@ function Header() {
 
     return () => window.removeEventListener("avatarUpdated", loadAvatar);
   }, [user]);
+
+  useEffect(() => {
+    const handleResize = () => setIsCompact(window.innerWidth <= 900);
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!openMenu) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!menuRef.current?.contains(event.target)) {
+        setOpenMenu(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpenMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenu]);
 
   const handleLogout = () => {
     logout();
@@ -37,28 +70,42 @@ function Header() {
   const isDark = theme === "dark";
 
   return (
-    <header style={{ ...styles.header, ...(isDark ? styles.headerDark : {}) }}>
-      <div>
+    <header
+      style={{
+        ...styles.header,
+        ...(isCompact ? styles.headerCompact : {}),
+        ...(isDark ? styles.headerDark : {}),
+      }}
+    >
+      <div style={isCompact ? styles.headingCompact : undefined}>
         <h2 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
           Tableau de bord
         </h2>
         <p style={styles.subtitle}>Bienvenue dans votre espace de gestion</p>
       </div>
 
-      <div style={styles.rightSide}>
+      <div style={{ ...styles.rightSide, ...(isCompact ? styles.rightSideCompact : {}) }}>
         <button
           type="button"
-          style={{ ...styles.themeButton, ...(isDark ? styles.themeButtonDark : {}) }}
+          style={{
+            ...styles.themeButton,
+            ...(isCompact ? styles.themeButtonCompact : {}),
+            ...(isDark ? styles.themeButtonDark : {}),
+          }}
           onClick={toggleTheme}
         >
           {isDark ? <FiSun /> : <FiMoon />}
-          {isDark ? "Clair" : "Sombre"}
+          {!isCompact && (isDark ? "Clair" : "Sombre")}
         </button>
 
-        <div style={styles.userMenuWrapper}>
+        <div ref={menuRef} style={styles.userMenuWrapper}>
           <button
             type="button"
-            style={{ ...styles.userMenu, ...(isDark ? styles.userMenuDark : {}) }}
+            style={{
+              ...styles.userMenu,
+              ...(isCompact ? styles.userMenuCompact : {}),
+              ...(isDark ? styles.userMenuDark : {}),
+            }}
             onClick={() => setOpenMenu(!openMenu)}
           >
             {avatar ? (
@@ -69,7 +116,7 @@ function Header() {
               </div>
             )}
 
-            <div style={styles.userText}>
+            <div style={{ ...styles.userText, ...(isCompact ? styles.userTextCompact : {}) }}>
               <p style={{ ...styles.userName, ...(isDark ? styles.userNameDark : {}) }}>
                 {user?.name || "Utilisateur"}
               </p>
@@ -80,7 +127,13 @@ function Header() {
           </button>
 
           {openMenu && (
-            <div style={{ ...styles.dropdown, ...(isDark ? styles.dropdownDark : {}) }}>
+            <div
+              style={{
+                ...styles.dropdown,
+                ...(isCompact ? styles.dropdownCompact : {}),
+                ...(isDark ? styles.dropdownDark : {}),
+              }}
+            >
               <div style={styles.dropdownHeader}>
                 {avatar ? (
                   <img src={avatar} alt="avatar" style={styles.dropdownAvatar} />
@@ -134,13 +187,19 @@ const styles = {
     flexShrink: 0,
     position: "sticky",
     top: 0,
-    zIndex: 50,
+    zIndex: 9000,
     borderBottom: "1px solid #e5e7eb",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "0 20px",
     boxShadow: "0 4px 18px rgba(15, 23, 42, 0.04)",
+  },
+  headerCompact: {
+    padding: "0 12px",
+  },
+  headingCompact: {
+    display: "none",
   },
   headerDark: {
     backgroundColor: "#0f172a",
@@ -165,6 +224,11 @@ const styles = {
     alignItems: "center",
     gap: "12px",
   },
+  rightSideCompact: {
+    width: "100%",
+    justifyContent: "space-between",
+    gap: "10px",
+  },
   themeButton: {
     height: "42px",
     padding: "0 14px",
@@ -177,6 +241,13 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "8px",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+  },
+  themeButtonCompact: {
+    width: "42px",
+    padding: 0,
+    justifyContent: "center",
   },
   themeButtonDark: {
     background: "#1e293b",
@@ -196,6 +267,12 @@ const styles = {
     border: "1px solid #e2e8f0",
     backgroundColor: "#f8fafc",
     color: "#0f172a",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+  },
+  userMenuCompact: {
+    minWidth: 0,
+    padding: "6px 8px",
   },
   userMenuDark: {
     backgroundColor: "#1e293b",
@@ -204,6 +281,9 @@ const styles = {
   },
   userText: {
     textAlign: "left",
+  },
+  userTextCompact: {
+    display: "none",
   },
   userName: {
     margin: 0,
@@ -242,8 +322,7 @@ const styles = {
     position: "absolute",
     top: "58px",
     right: 0,
-    background: "rgba(255,255,255,0.96)",
-    backdropFilter: "blur(10px)",
+    background: "#ffffff",
     borderRadius: "16px",
     boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
     padding: "10px",
@@ -251,11 +330,19 @@ const styles = {
     flexDirection: "column",
     gap: "6px",
     minWidth: "250px",
-    zIndex: 1000,
+    zIndex: 9100,
     border: "1px solid #e2e8f0",
+    boxSizing: "border-box",
+  },
+  dropdownCompact: {
+    position: "fixed",
+    top: "76px",
+    left: "12px",
+    right: "12px",
+    minWidth: 0,
   },
   dropdownDark: {
-    background: "rgba(15,23,42,0.96)",
+    background: "#0f172a",
     border: "1px solid #334155",
   },
   dropdownHeader: {
@@ -263,6 +350,8 @@ const styles = {
     alignItems: "center",
     gap: "10px",
     padding: "10px",
+    userSelect: "none",
+    WebkitUserSelect: "none",
   },
   dropdownAvatar: {
     width: "42px",
@@ -316,6 +405,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "10px",
+    userSelect: "none",
+    WebkitUserSelect: "none",
   },
   dropdownBtnDark: {
     background: "#1e293b",
@@ -333,6 +424,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "10px",
+    userSelect: "none",
+    WebkitUserSelect: "none",
   },
 };
 

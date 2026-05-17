@@ -1,0 +1,29 @@
+\babel@toc {french}{}\relax 
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {1.1}{\ignorespaces Comparaison entre les solutions existantes et la solution proposée}}{7}{table.caption.10}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Fiche descriptive du cas d’utilisation : Authentification}}{15}{table.caption.14}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Fiche descriptive du cas d’utilisation : Consulter les réclamations}}{15}{table.caption.15}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Fiche descriptive du cas d’utilisation : Filtrer et rechercher une réclamation}}{16}{table.caption.16}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces Fiche descriptive du cas d’utilisation : Traiter une réclamation}}{16}{table.caption.17}%
+\contentsline {table}{\numberline {2.5}{\ignorespaces Fiche descriptive du cas d’utilisation : Classifier manuellement une réclamation}}{17}{table.caption.18}%
+\contentsline {table}{\numberline {2.6}{\ignorespaces Fiche descriptive du cas d’utilisation : Gérer les utilisateurs}}{17}{table.caption.19}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Description des principales classes du système}}{23}{table.caption.31}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Description des scénarios des diagrammes de séquence}}{28}{table.caption.38}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Schéma relationnel simplifié de la base de données}}{29}{table.caption.39}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces Résultats du modèle de détection des réclamations}}{70}{table.caption.60}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces Résultats du modèle de classification des catégories}}{70}{table.caption.61}%
+\contentsline {table}{\numberline {7.3}{\ignorespaces Résultats du modèle d'estimation de l'urgence}}{71}{table.caption.62}%
+\contentsline {table}{\numberline {7.4}{\ignorespaces Synthèse des tests fonctionnels backend}}{79}{table.caption.76}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces Synthèse des diagrammes UML réalisés}}{84}{table.caption.79}%
+\contentsline {table}{\numberline {A.2}{\ignorespaces Routes API d'authentification et de gestion des utilisateurs}}{85}{table.caption.80}%
+\contentsline {table}{\numberline {A.3}{\ignorespaces Routes API de gestion des réclamations et des statistiques}}{85}{table.caption.81}%
+\contentsline {table}{\numberline {A.4}{\ignorespaces Champs principaux d'une réclamation}}{86}{table.caption.82}%
+\contentsline {table}{\numberline {A.5}{\ignorespaces Exemples de commentaires utilisés dans le dataset}}{86}{table.caption.83}%
+\contentsline {table}{\numberline {A.6}{\ignorespaces Répartition des catégories de réclamations}}{87}{table.caption.84}%
