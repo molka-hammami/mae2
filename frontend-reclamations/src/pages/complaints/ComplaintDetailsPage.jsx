@@ -41,7 +41,9 @@ const isDark = theme === "dark";
         const response = await fetch(
           `http://127.0.0.1:8000/api/reclamations/${id}/?role=${
             user?.role || ""
-          }&actor_name=${encodeURIComponent(user?.name || "")}`
+          }&actor_name=${encodeURIComponent(
+            user?.name || ""
+          )}&assigned_category=${encodeURIComponent(user?.assignedCategory || "")}`
         );
 
         if (!response.ok) {
@@ -63,7 +65,7 @@ const isDark = theme === "dark";
     };
 
     loadComplaint();
-  }, [id, user?.role, user?.name]);
+  }, [id, user?.role, user?.name, user?.assignedCategory]);
 
   const isNotClassified =
     !complaint?.category ||
@@ -92,6 +94,7 @@ const isDark = theme === "dark";
             internal_note: internalNote,
             actor_name: user?.name || "Agent",
             actor_role: user?.role || "AGENT",
+            assigned_category: user?.assignedCategory || "",
           }),
         }
       );
@@ -123,6 +126,7 @@ const isDark = theme === "dark";
           body: JSON.stringify({
             actor_name: user?.name || "",
             actor_role: user?.role || "",
+            assigned_category: user?.assignedCategory || "",
           }),
         }
       );

@@ -130,6 +130,27 @@ def guess_gender(name):
             return "Femme"
 
     return "Autre"
+
+
+def agent_can_access_reclamation(reclamation, role, assigned_category):
+    if role != "AGENT":
+        return True
+
+    annotation = getattr(reclamation.comment, "annotation", None)
+    return bool(
+        assigned_category
+        and annotation
+        and annotation.category == assigned_category
+    )
+
+
+def forbidden_category_response():
+    return Response(
+        {"error": "Cette reclamation ne correspond pas a la categorie de cet agent."},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 @api_view(["GET"])
 def reclamation_list(request):
     role = request.GET.get("role", "")
@@ -139,10 +160,13 @@ def reclamation_list(request):
         comment__annotation__is_reclamation="reclamation"
     ).order_by("-id")
 
-    if role == "AGENT" and assigned_category:
-        reclamations = reclamations.filter(
-            comment__annotation__category=assigned_category
-        )
+    if role == "AGENT":
+        if assigned_category:
+            reclamations = reclamations.filter(
+                comment__annotation__category=assigned_category
+            )
+        else:
+            reclamations = reclamations.none()
 
     serializer = ReclamationSerializer(reclamations, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -158,6 +182,10 @@ def reclamation_detail(request, pk):
 
     role = request.GET.get("role", "")
     actor_name = request.GET.get("actor_name", "")
+    assigned_category = request.GET.get("assigned_category", "")
+
+    if not agent_can_access_reclamation(reclamation, role, assigned_category):
+        return forbidden_category_response()
 
     if role == "AGENT":
         changed = False
@@ -266,6 +294,10 @@ def mark_as_processed(request, pk):
 
     actor_name = request.data.get("actor_name", "")
     actor_role = request.data.get("actor_role", "")
+    assigned_category = request.data.get("assigned_category", "")
+
+    if not agent_can_access_reclamation(reclamation, actor_role, assigned_category):
+        return forbidden_category_response()
 
     if reclamation.status != "TRAITEE":
         old_status = reclamation.status
@@ -331,6 +363,10 @@ def update_internal_note(request, pk):
     internal_note = request.data.get("internal_note", "")
     actor_name = request.data.get("actor_name", "Agent")
     actor_role = request.data.get("actor_role", "AGENT")
+    assigned_category = request.data.get("assigned_category", "")
+
+    if not agent_can_access_reclamation(reclamation, actor_role, assigned_category):
+        return forbidden_category_response()
 
     reclamation.internal_note = internal_note
     reclamation.save()

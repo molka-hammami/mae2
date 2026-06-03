@@ -1471,7 +1471,7 @@ function DashboardPage() {
 
               ) : (
 
-                <AgentCategoryGauge data={categoryStats} user={user} />
+                <AgentCategoryGauge data={categoryStats} user={user} isDark={isDark} />
 
               )}
 
@@ -2323,7 +2323,7 @@ function AdminCategoryPie({ data, selectedCategory, compact = false, onSelect })
 
 
 
-function AgentCategoryGauge({ data, user }) {
+function AgentCategoryGauge({ data, user, isDark }) {
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
@@ -2401,11 +2401,13 @@ function AgentCategoryGauge({ data, user }) {
 
       <div style={styles.semiChartCenter}>
 
-        <h2 style={styles.semiPercent}>{percent}%</h2>
+        <h2 style={{ ...styles.semiPercent, ...(isDark ? styles.semiPercentDark : {}) }}>
+          {percent}%
+        </h2>
 
         <p style={styles.semiLabel}>{activeItem.label}</p>
 
-        <span style={styles.semiValue}>
+        <span style={{ ...styles.semiValue, ...(isDark ? styles.semiValueDark : {}) }}>
 
           {activeItem.value} / {total} réclamations
 
@@ -5154,6 +5156,12 @@ const styles = {
 
   },
 
+  semiPercentDark: {
+
+    color: "#f8fafc",
+
+  },
+
 
 
   semiLabel: {
@@ -5177,6 +5185,12 @@ const styles = {
     fontSize: "13px",
 
     fontWeight: "700",
+
+  },
+
+  semiValueDark: {
+
+    color: "#cbd5e1",
 
   },
 

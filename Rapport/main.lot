@@ -1,29 +1,32 @@
 \babel@toc {french}{}\relax 
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {1.1}{\ignorespaces Comparaison entre les solutions existantes et la solution proposée}}{7}{table.caption.10}%
+\contentsline {table}{\numberline {1.1}{\ignorespaces Comparaison entre les solutions existantes et la solution proposée}}{5}{table.caption.9}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {2.1}{\ignorespaces Fiche descriptive du cas d’utilisation : Authentification}}{15}{table.caption.14}%
-\contentsline {table}{\numberline {2.2}{\ignorespaces Fiche descriptive du cas d’utilisation : Consulter les réclamations}}{15}{table.caption.15}%
-\contentsline {table}{\numberline {2.3}{\ignorespaces Fiche descriptive du cas d’utilisation : Filtrer et rechercher une réclamation}}{16}{table.caption.16}%
-\contentsline {table}{\numberline {2.4}{\ignorespaces Fiche descriptive du cas d’utilisation : Traiter une réclamation}}{16}{table.caption.17}%
-\contentsline {table}{\numberline {2.5}{\ignorespaces Fiche descriptive du cas d’utilisation : Classifier manuellement une réclamation}}{17}{table.caption.18}%
-\contentsline {table}{\numberline {2.6}{\ignorespaces Fiche descriptive du cas d’utilisation : Gérer les utilisateurs}}{17}{table.caption.19}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Fiche descriptive du cas d’utilisation : Authentification}}{14}{table.caption.13}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Fiche descriptive du cas d’utilisation : Consulter les réclamations}}{14}{table.caption.14}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Fiche descriptive du cas d’utilisation : Filtrer et rechercher une réclamation}}{14}{table.caption.15}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces Fiche descriptive du cas d’utilisation : Traiter une réclamation}}{15}{table.caption.16}%
+\contentsline {table}{\numberline {2.5}{\ignorespaces Fiche descriptive du cas d’utilisation : Classifier manuellement une réclamation}}{15}{table.caption.17}%
+\contentsline {table}{\numberline {2.6}{\ignorespaces Fiche descriptive du cas d’utilisation : Gérer les utilisateurs}}{15}{table.caption.18}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Description des principales classes du système}}{23}{table.caption.31}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Description des principales classes du système}}{24}{table.caption.33}%
 \contentsline {table}{\numberline {3.2}{\ignorespaces Description des scénarios des diagrammes de séquence}}{28}{table.caption.38}%
 \contentsline {table}{\numberline {3.3}{\ignorespaces Schéma relationnel simplifié de la base de données}}{29}{table.caption.39}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Répartition des commentaires collectés selon la source}}{39}{table.caption.41}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Répartition des commentaires selon leur nature}}{39}{table.caption.42}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Répartition des réclamations collectées par catégorie}}{40}{table.caption.43}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Trois meilleurs résultats intermédiaires parmi les dix exécutions}}{54}{table.caption.46}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Résultats du modèle de détection des réclamations}}{55}{table.caption.47}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Résultats du modèle de classification des catégories}}{55}{table.caption.48}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Résultats du modèle d'estimation de l'urgence}}{55}{table.caption.49}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Synthèse des tests fonctionnels backend}}{67}{table.caption.54}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {7.1}{\ignorespaces Résultats du modèle de détection des réclamations}}{70}{table.caption.60}%
-\contentsline {table}{\numberline {7.2}{\ignorespaces Résultats du modèle de classification des catégories}}{70}{table.caption.61}%
-\contentsline {table}{\numberline {7.3}{\ignorespaces Résultats du modèle d'estimation de l'urgence}}{71}{table.caption.62}%
-\contentsline {table}{\numberline {7.4}{\ignorespaces Synthèse des tests fonctionnels backend}}{79}{table.caption.76}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {A.1}{\ignorespaces Synthèse des diagrammes UML réalisés}}{84}{table.caption.79}%
-\contentsline {table}{\numberline {A.2}{\ignorespaces Routes API d'authentification et de gestion des utilisateurs}}{85}{table.caption.80}%
-\contentsline {table}{\numberline {A.3}{\ignorespaces Routes API de gestion des réclamations et des statistiques}}{85}{table.caption.81}%
-\contentsline {table}{\numberline {A.4}{\ignorespaces Champs principaux d'une réclamation}}{86}{table.caption.82}%
-\contentsline {table}{\numberline {A.5}{\ignorespaces Exemples de commentaires utilisés dans le dataset}}{86}{table.caption.83}%
-\contentsline {table}{\numberline {A.6}{\ignorespaces Répartition des catégories de réclamations}}{87}{table.caption.84}%
+\contentsline {table}{\numberline {7.1}{\ignorespaces Synthèse des diagrammes UML réalisés}}{89}{table.caption.84}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces Routes API d'authentification et de gestion des utilisateurs}}{91}{table.caption.87}%
+\contentsline {table}{\numberline {7.3}{\ignorespaces Routes API de gestion des réclamations et des statistiques}}{92}{table.caption.88}%
+\contentsline {table}{\numberline {7.4}{\ignorespaces Champs principaux d'une réclamation}}{92}{table.caption.89}%
+\contentsline {table}{\numberline {7.5}{\ignorespaces Exemples de commentaires utilisés dans le dataset}}{93}{table.caption.91}%
+\contentsline {table}{\numberline {7.6}{\ignorespaces Répartition des catégories de réclamations}}{93}{table.caption.92}%

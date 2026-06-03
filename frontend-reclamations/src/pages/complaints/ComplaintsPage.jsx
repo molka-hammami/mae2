@@ -4,6 +4,7 @@ import { DateRange } from "react-date-range";
 import ComplaintTable from "../../components/complaints/ComplaintTable";
 import SkeletonLoader from "../../components/common/SkeletonLoader";
 import { fetchComplaints } from "../../api/complaintsApi";
+import { AuthContext } from "../../context/AuthContext";
 import { ThemeContext } from "../../context/ThemeContext";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -27,6 +28,7 @@ const sortOptions = [
 
 function ComplaintsPage() {
   const { theme } = useContext(ThemeContext);
+  const { user } = useContext(AuthContext);
   const isDark = theme === "dark";
 
   const [complaints, setComplaints] = useState([]);
@@ -50,7 +52,7 @@ function ComplaintsPage() {
   useEffect(() => {
     const loadComplaints = async () => {
       try {
-        const data = await fetchComplaints();
+        const data = await fetchComplaints(user);
         setComplaints(data);
       } catch (err) {
         setError(err.message || "Erreur lors du chargement des réclamations");
@@ -60,7 +62,7 @@ function ComplaintsPage() {
     };
 
     loadComplaints();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const closePeriodOnOutsideClick = (event) => {
@@ -222,7 +224,7 @@ function ComplaintsPage() {
 
           <div style={styles.filtersGrid}>
             <FilterInput label="Client" value={filters.client} onChange={(value) => updateFilter("client", value)} placeholder="Nom du client" isDark={isDark} />
-            <FilterInput label="Agence" value={filters.agency} onChange={(value) => updateFilter("agency", value)} placeholder="Agent ou agence" isDark={isDark} />
+            <FilterInput label="Agent" value={filters.agency} onChange={(value) => updateFilter("agency", value)} placeholder="Nom de l'agent" isDark={isDark} />
             <FilterSelect label="Canal" value={filters.channel} onChange={(value) => updateFilter("channel", value)} options={channelOptions} isDark={isDark} />
             <PeriodFilter
               startDate={filters.startDate}

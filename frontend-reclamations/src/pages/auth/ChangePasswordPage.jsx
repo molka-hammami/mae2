@@ -8,6 +8,7 @@ function ChangePasswordPage() {
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const isDark = theme === "dark";
+  const isFirstAccess = user?.mustChangePassword;
 
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -83,9 +84,13 @@ function ChangePasswordPage() {
   return (
     <div style={{ ...styles.page, ...(isDark ? styles.pageDark : {}) }}>
       <div style={{ ...styles.card, ...(isDark ? styles.cardDark : {}) }}>
-        <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>Premier accès</h1>
+        <h1 style={{ ...styles.title, ...(isDark ? styles.titleDark : {}) }}>
+          {isFirstAccess ? "Premier accès" : "Changer le mot de passe"}
+        </h1>
         <p style={{ ...styles.subtitle, ...(isDark ? styles.subtitleDark : {}) }}>
-          Bonjour {user.name}, vous devez changer votre mot de passe temporaire.
+          {isFirstAccess
+            ? `Bonjour ${user.name}, vous devez changer votre mot de passe temporaire.`
+            : `Bonjour ${user.name}, renseignez votre mot de passe actuel puis choisissez votre nouveau mot de passe.`}
         </p>
 
         <div style={{ ...styles.rulesBox, ...(isDark ? styles.rulesBoxDark : {}) }}>

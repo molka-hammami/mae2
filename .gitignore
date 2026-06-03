@@ -1,3 +1,5 @@
 node_modules/
 .env
 backend\config\settings.py
+project/
+Rapport/

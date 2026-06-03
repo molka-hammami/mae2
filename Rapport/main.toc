@@ -1,91 +1,92 @@
 \babel@toc {french}{}\relax 
-\contentsline {chapter}{Introduction générale}{1}{chapter*.8}%
-\contentsline {chapter}{\numberline {1}Contexte général et compréhension métier}{3}{chapter.1}%
-\contentsline {section}{\numberline {1.1}Introduction}{3}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Présentation de l’entreprise}{3}{section.1.2}%
-\contentsline {section}{\numberline {1.3}Présentation du domaine}{4}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Gestion traditionnelle des réclamations}{5}{section.1.4}%
-\contentsline {section}{\numberline {1.5}Problématique détaillée}{5}{section.1.5}%
-\contentsline {section}{\numberline {1.6}Étude de l’existant}{6}{section.1.6}%
-\contentsline {section}{\numberline {1.7}Objectifs du projet et solution proposée}{7}{section.1.7}%
-\contentsline {section}{\numberline {1.8}Périmètre du projet}{8}{section.1.8}%
-\contentsline {section}{\numberline {1.9}Méthodologie CRISP-DM}{8}{section.1.9}%
-\contentsline {section}{\numberline {1.10}Conclusion}{10}{section.1.10}%
-\contentsline {chapter}{\numberline {2}Analyse des besoins et spécification}{11}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Introduction}{11}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Identification des acteurs}{11}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Besoins fonctionnels}{12}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Besoins non fonctionnels}{13}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Diagramme de cas d’utilisation général}{13}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Diagramme de cas d’utilisation détaillé}{14}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Fiches descriptives des cas d’utilisation}{15}{section.2.7}%
-\contentsline {section}{\numberline {2.8}Conclusion}{17}{section.2.8}%
-\contentsline {chapter}{\numberline {3}Conception de la solution}{18}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Introduction}{18}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Environnement technique}{18}{section.3.2}%
+\contentsline {chapter}{Introduction générale}{1}{chapter*.7}%
+\contentsline {chapter}{\numberline {1}Contexte général et compréhension métier}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Introduction}{2}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Présentation de l’entreprise}{2}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Présentation du domaine}{3}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Gestion traditionnelle des réclamations}{4}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Problématique détaillée}{4}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Étude de l’existant}{5}{section.1.6}%
+\contentsline {section}{\numberline {1.7}Objectifs du projet et solution proposée}{6}{section.1.7}%
+\contentsline {section}{\numberline {1.8}Périmètre du projet}{6}{section.1.8}%
+\contentsline {section}{\numberline {1.9}Méthodologie CRISP-DM}{7}{section.1.9}%
+\contentsline {section}{\numberline {1.10}Conclusion}{8}{section.1.10}%
+\contentsline {chapter}{\numberline {2}Analyse des besoins et spécification}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Introduction}{9}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Identification des acteurs}{9}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Besoins fonctionnels}{10}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Besoins non fonctionnels}{11}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Diagramme de cas d’utilisation général}{11}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Diagramme de cas d’utilisation détaillé}{12}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Fiches descriptives des cas d’utilisation}{13}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Conclusion}{16}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Conception de la solution}{17}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Introduction}{17}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Environnement technique}{17}{section.3.2}%
 \contentsline {section}{\numberline {3.3}Architecture globale du système}{20}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Diagrammes UML}{21}{section.3.4}%
+\contentsline {section}{\numberline {3.4}Diagrammes UML}{22}{section.3.4}%
 \contentsline {subsection}{\numberline {3.4.1}Diagramme de classes}{22}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Diagrammes de séquence}{24}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.2}Diagrammes de séquence}{25}{subsection.3.4.2}%
 \contentsline {section}{\numberline {3.5}Conception de la base de données}{28}{section.3.5}%
 \contentsline {section}{\numberline {3.6}Conception des API}{29}{section.3.6}%
 \contentsline {section}{\numberline {3.7}Conception du module NLP}{32}{section.3.7}%
 \contentsline {section}{\numberline {3.8}Conclusion}{37}{section.3.8}%
-\contentsline {chapter}{\numberline {4}Collecte et préparation des données}{38}{chapter.4}%
+\contentsline {chapter}{\numberline {4}Compréhension, Collecte et préparation des données}{38}{chapter.4}%
 \contentsline {section}{\numberline {4.1}Introduction}{38}{section.4.1}%
 \contentsline {section}{\numberline {4.2}Sources de données}{38}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Méthodes de collecte}{39}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Description des données}{40}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Nettoyage et prétraitement des données}{41}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Stockage initial}{42}{section.4.6}%
-\contentsline {section}{\numberline {4.7}Conclusion}{42}{section.4.7}%
-\contentsline {chapter}{\numberline {5}Développement backend et base de données}{43}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Introduction}{43}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Environnement technique backend}{43}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Architecture backend}{44}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Conception et implémentation des API}{45}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Gestion des réclamations}{46}{section.5.5}%
-\contentsline {section}{\numberline {5.6}Implémentation de la base de données}{47}{section.5.6}%
-\contentsline {section}{\numberline {5.7}Gestion des utilisateurs}{47}{section.5.7}%
-\contentsline {section}{\numberline {5.8}Conclusion}{48}{section.5.8}%
-\contentsline {chapter}{\numberline {6}Développement frontend et sécurité de l’application}{49}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Introduction}{49}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Présentation de l’interface}{49}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Pages principales}{50}{section.6.3}%
-\contentsline {subsection}{\numberline {6.3.1}Page de connexion}{50}{subsection.6.3.1}%
-\contentsline {subsection}{\numberline {6.3.2}Tableau de bord principal}{51}{subsection.6.3.2}%
-\contentsline {subsection}{\numberline {6.3.3}Visualisation et analyse des données}{51}{subsection.6.3.3}%
-\contentsline {subsection}{\numberline {6.3.4}Réseau et annuaire des agences}{52}{subsection.6.3.4}%
-\contentsline {subsection}{\numberline {6.3.5}Gestion des réclamations}{53}{subsection.6.3.5}%
-\contentsline {subsection}{\numberline {6.3.6}Détail d’une réclamation}{53}{subsection.6.3.6}%
-\contentsline {section}{\numberline {6.4}Fonctionnalités implémentées}{54}{section.6.4}%
-\contentsline {subsection}{\numberline {6.4.1}Différences entre l’interface agent et l’interface administrateur}{54}{subsection.6.4.1}%
-\contentsline {subsection}{\numberline {6.4.2}Authentification et contrôle d’accès}{55}{subsection.6.4.2}%
-\contentsline {subsection}{\numberline {6.4.3}Visualisation des données}{56}{subsection.6.4.3}%
-\contentsline {subsection}{\numberline {6.4.4}Gestion des utilisateurs}{57}{subsection.6.4.4}%
-\contentsline {subsection}{\numberline {6.4.5}Notifications et envoi d’emails}{59}{subsection.6.4.5}%
-\contentsline {subsection}{\numberline {6.4.6}Sécurité des données}{60}{subsection.6.4.6}%
-\contentsline {section}{\numberline {6.5}Conclusion}{61}{section.6.5}%
-\contentsline {chapter}{\numberline {7}Traitement intelligent des réclamations et analyse des résultats}{62}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Introduction}{62}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Exploration et description des données}{62}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Prétraitement NLP}{64}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Modélisation et classification des données}{65}{section.7.4}%
-\contentsline {section}{\numberline {7.5}Résultats d’entraînement des modèles}{69}{section.7.5}%
-\contentsline {section}{\numberline {7.6}Score d’urgence}{71}{section.7.6}%
-\contentsline {section}{\numberline {7.7}Dashboard BI}{73}{section.7.7}%
-\contentsline {section}{\numberline {7.8}KPI}{75}{section.7.8}%
-\contentsline {section}{\numberline {7.9}Tests et validation}{77}{section.7.9}%
-\contentsline {section}{\numberline {7.10}Discussion des résultats}{79}{section.7.10}%
-\contentsline {section}{\numberline {7.11}Conclusion}{80}{section.7.11}%
-\contentsline {chapter}{Conclusion générale}{81}{chapter*.77}%
-\contentsline {chapter}{Bibliographie}{82}{chapter*.78}%
-\contentsline {chapter}{\numberline {A}Annexes}{84}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Diagrammes UML}{84}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Règles de gestion principales}{84}{subsection.A.1.1}%
-\contentsline {section}{\numberline {A.2}Documentation API}{85}{section.A.2}%
-\contentsline {subsection}{\numberline {A.2.1}Champs principaux retournés pour une réclamation}{86}{subsection.A.2.1}%
-\contentsline {section}{\numberline {A.3}Exemples de données}{86}{section.A.3}%
-\contentsline {subsection}{\numberline {A.3.1}Exemple de commentaire après prétraitement}{86}{subsection.A.3.1}%
-\contentsline {subsection}{\numberline {A.3.2}Répartition du dataset}{86}{subsection.A.3.2}%
-\contentsline {subsection}{\numberline {A.3.3}Exemple de résultat NLP}{87}{subsection.A.3.3}%
+\contentsline {section}{\numberline {4.3}Compréhension des données collectées}{39}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Problèmes identifiés dans les données}{40}{subsection.4.3.1}%
+\contentsline {section}{\numberline {4.4}Confidentialité des données et limites de la collecte}{40}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Méthodes de collecte}{41}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Description des données}{42}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Nettoyage et prétraitement des données}{43}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Stockage initial}{44}{section.4.8}%
+\contentsline {section}{\numberline {4.9}Conclusion}{45}{section.4.9}%
+\contentsline {chapter}{\numberline {5}Traitement intelligent des réclamations et analyse des résultats}{46}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Introduction}{46}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Exploration et description des données}{46}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Prétraitement NLP}{49}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Modélisation et classification des données}{50}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Résultats d’entraînement des modèles}{53}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Score d’urgence}{56}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Tests et validation du module intelligent}{57}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Discussion des résultats}{59}{section.5.8}%
+\contentsline {section}{\numberline {5.9}Conclusion}{59}{section.5.9}%
+\contentsline {chapter}{\numberline {6}Développement backend et base de données}{60}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Introduction}{60}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Environnement technique backend}{60}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Architecture backend}{61}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Conception et implémentation des API}{63}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Gestion des réclamations}{63}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Implémentation de la base de données}{64}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Gestion des utilisateurs}{65}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Tests fonctionnels des API backend}{66}{section.6.8}%
+\contentsline {section}{\numberline {6.9}Conclusion}{69}{section.6.9}%
+\contentsline {chapter}{\numberline {7}Développement frontend et sécurité de l’application}{70}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Introduction}{70}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Présentation de l’interface}{70}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Pages principales}{71}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Page de connexion}{71}{subsection.7.3.1}%
+\contentsline {subsection}{\numberline {7.3.2}Tableau de bord principal}{72}{subsection.7.3.2}%
+\contentsline {subsection}{\numberline {7.3.3}Visualisation et analyse des données}{73}{subsection.7.3.3}%
+\contentsline {subsection}{\numberline {7.3.4}Indicateurs clés de performance}{73}{subsection.7.3.4}%
+\contentsline {subsection}{\numberline {7.3.5}Réseau et annuaire des agences}{75}{subsection.7.3.5}%
+\contentsline {subsection}{\numberline {7.3.6}Gestion des réclamations}{77}{subsection.7.3.6}%
+\contentsline {subsection}{\numberline {7.3.7}Détail d’une réclamation}{77}{subsection.7.3.7}%
+\contentsline {section}{\numberline {7.4}Fonctionnalités implémentées}{78}{section.7.4}%
+\contentsline {subsection}{\numberline {7.4.1}Différences entre l’interface agent et l’interface administrateur}{79}{subsection.7.4.1}%
+\contentsline {subsection}{\numberline {7.4.2}Reclassification manuelle des réclamations}{79}{subsection.7.4.2}%
+\contentsline {subsection}{\numberline {7.4.3}Authentification et contrôle d’accès}{80}{subsection.7.4.3}%
+\contentsline {subsection}{\numberline {7.4.4}Gestion des utilisateurs}{81}{subsection.7.4.4}%
+\contentsline {subsection}{\numberline {7.4.5}Notifications et envoi d’emails}{83}{subsection.7.4.5}%
+\contentsline {subsection}{\numberline {7.4.6}Sécurité des données}{84}{subsection.7.4.6}%
+\contentsline {section}{\numberline {7.5}Conclusion}{85}{section.7.5}%
+\contentsline {chapter}{Conclusion générale}{86}{chapter*.81}%
+\contentsline {chapter}{Bibliographie}{87}{chapter*.82}%
+\contentsline {chapter}{Annexe A : Diagrammes UML}{89}{chapter*.83}%
+\contentsline {chapter}{Annexe B : Règles de gestion principales}{90}{chapter*.85}%
+\contentsline {chapter}{Annexe C : Documentation API}{91}{chapter*.86}%
+\contentsline {chapter}{Annexe D : Exemples de résultats obtenus}{93}{chapter*.90}%
+\contentsline {subsection}{\numberline {D.1}Exemple de commentaire après prétraitement}{93}{subsection.7.5.1}%
+\contentsline {subsection}{\numberline {D.2}Répartition du dataset}{93}{subsection.7.5.2}%
+\contentsline {subsection}{\numberline {D.3}Exemple de résultat NLP}{93}{subsection.7.5.3}%

@@ -60,9 +60,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mae_reclamations_new",
+        "NAME": "mae",
         "USER": "postgres",
-        "PASSWORD": "1234",
+        "PASSWORD": "ranim123",
         "HOST": "localhost",
         "PORT": "5432",
     }
@@ -107,7 +107,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "molkahammami725@gmail.com"
-EMAIL_HOST_PASSWORD = "fwbu gbzt sfeb wozc"
+EMAIL_HOST_USER = "maeplateform@gmail.com"
+EMAIL_HOST_PASSWORD = "mkuc xigg qvvx ydgq"
 
-DEFAULT_FROM_EMAIL = "MAE Assurances <molkahammami725@gmail.com>"
+DEFAULT_FROM_EMAIL = "MAE Assurances <maeplateform@gmail.com>"

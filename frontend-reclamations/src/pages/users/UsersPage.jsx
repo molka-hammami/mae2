@@ -33,8 +33,9 @@ function UsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { theme } = useContext(ThemeContext);
-const isDark = theme === "dark";
+  const isDark = theme === "dark";
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState(initialForm);
 
@@ -207,18 +208,26 @@ const isDark = theme === "dark";
     }
   };
 
-  const handleDelete = async (user) => {
-    const confirmDelete = window.confirm(
-      `Voulez-vous vraiment supprimer ${user.name} ?`
-    );
+  const openDeleteModal = (user) => {
+    setUserToDelete(user);
+    setError("");
+    setSuccess("");
+  };
 
-    if (!confirmDelete) return;
+  const closeDeleteModal = () => {
+    if (saving) return;
+    setUserToDelete(null);
+  };
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
 
     try {
+      setSaving(true);
       setError("");
       setSuccess("");
 
-      const response = await fetch(`${API_BASE}/users/${user.id}/`, {
+      const response = await fetch(`${API_BASE}/users/${userToDelete.id}/`, {
         method: "DELETE",
       });
 
@@ -227,9 +236,12 @@ const isDark = theme === "dark";
       }
 
       setSuccess("Utilisateur supprimé avec succès.");
+      setUserToDelete(null);
       await loadUsers();
     } catch (err) {
       setError(err.message || "Une erreur est survenue.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -328,7 +340,7 @@ const isDark = theme === "dark";
                       {user.role !== "ADMIN" && (
                         <button
                           style={styles.deleteButton}
-                          onClick={() => handleDelete(user)}
+                          onClick={() => openDeleteModal(user)}
                         >
                           Supprimer
                         </button>
@@ -471,6 +483,62 @@ const isDark = theme === "dark";
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {userToDelete && (
+        <div style={styles.overlay}>
+          <div
+            style={{
+              ...styles.confirmModal,
+              ...(isDark ? styles.confirmModalDark : {}),
+            }}
+          >
+            <div style={styles.confirmIcon}>!</div>
+
+            <h2
+              style={{
+                ...styles.confirmTitle,
+                ...(isDark ? styles.modalTitleDark : {}),
+              }}
+            >
+              Supprimer cet utilisateur ?
+            </h2>
+
+            <p
+              style={{
+                ...styles.confirmText,
+                ...(isDark ? styles.messageDark : {}),
+              }}
+            >
+              Voulez-vous vraiment supprimer{" "}
+              <strong>{userToDelete.name}</strong> ? Cette action est
+              irréversible.
+            </p>
+
+            <div style={styles.confirmActions}>
+              <button
+                type="button"
+                style={{
+                  ...styles.secondaryButton,
+                  ...(isDark ? styles.secondaryButtonDark : {}),
+                }}
+                onClick={closeDeleteModal}
+                disabled={saving}
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                style={styles.confirmDeleteButton}
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                {saving ? "Suppression..." : "Oui, supprimer"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -671,6 +739,12 @@ const styles = {
     cursor: "pointer",
   },
 
+  secondaryButtonDark: {
+    background: "#0f172a",
+    border: "1px solid #334155",
+    color: "#e2e8f0",
+  },
+
   overlay: {
     position: "fixed",
     inset: 0,
@@ -695,6 +769,70 @@ const styles = {
     background: "#111827",
     border: "1px solid #1f2937",
     boxShadow: "0 24px 52px rgba(0, 0, 0, 0.4)",
+  },
+
+  confirmModal: {
+    width: "100%",
+    maxWidth: "430px",
+    background: "#ffffff",
+    borderRadius: "22px",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.22)",
+    padding: "28px",
+    textAlign: "center",
+    border: "1px solid #fee2e2",
+  },
+
+  confirmModalDark: {
+    background: "#111827",
+    border: "1px solid #3f1d1d",
+    boxShadow: "0 24px 60px rgba(0, 0, 0, 0.48)",
+  },
+
+  confirmIcon: {
+    width: "54px",
+    height: "54px",
+    borderRadius: "50%",
+    background: "#fee2e2",
+    color: "#dc2626",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 16px",
+    fontSize: "28px",
+    fontWeight: "900",
+  },
+
+  confirmTitle: {
+    margin: "0 0 10px",
+    color: "#1e293b",
+    fontSize: "22px",
+    fontWeight: "800",
+  },
+
+  confirmText: {
+    margin: "0",
+    color: "#64748b",
+    fontSize: "15px",
+    lineHeight: 1.6,
+  },
+
+  confirmActions: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    marginTop: "24px",
+    flexWrap: "wrap",
+  },
+
+  confirmDeleteButton: {
+    border: "none",
+    borderRadius: "12px",
+    background: "#dc2626",
+    color: "#ffffff",
+    fontWeight: "800",
+    padding: "12px 18px",
+    cursor: "pointer",
+    boxShadow: "0 12px 24px rgba(220, 38, 38, 0.24)",
   },
 
   modalHeader: {
