@@ -1,0 +1,74 @@
+[
+  {
+    "text": "بربي عندكم واتساب باش ننجم نتواصل معاكم",
+    "is_reclamation": "reclamation",
+    "category": "SERVICE CLIENT",
+    "urgency": "faible"
+  },
+  {
+    "text": "Félicitations à toute l'équipe",
+    "is_reclamation": "non_reclamation",
+    "category": null,
+    "urgency": "faible"
+  },
+  {
+    "text": "عندي قريب العام ما رجعوليش حقي",
+    "is_reclamation": "reclamation",
+    "category": "SERVICE CLIENT",
+    "urgency": "elevee"
+  },
+  {
+    "text": "هل بمكن لسيارة ذو لوحة منجمية فرنسية الدخول إلى تونس،",
+    "is_reclamation": "reclamation",
+    "category": "SINISTRE AUTO",
+    "urgency": "faible"
+  },
+  {
+    "text": "انشاء الله رمضانكم مبروك و كل عام وانتم بخير",
+    "is_reclamation": "non_reclamation",
+    "category": null,
+    "urgency": "faible"
+  },
+  {
+    "text": "بلاهي الاتفاقية الجديدة مع ودادية التربية شنوة فحواها . و كيفية الاتصال بكم ؟",
+    "is_reclamation": "reclamation",
+    "category": "SINISTRE VIE",
+    "urgency": "faible"
+  },
+  {
+  "text": "Je n'ai toujours pas reçu mon indemnisation pour le dégât des eaux, malgré plusieurs relances",
+  "is_reclamation": "reclamation",
+  "category": "SINISTRE IRDS",
+  "urgency": "moyenne"
+  },
+  {
+    "text": "Merci beaucoup rabi yfadalkom quelle belle surprise",
+    "is_reclamation": "non_reclamation",
+    "category": null,
+    "urgency": "faible"
+  },
+  {
+    "text": "عندي معاهم سنوات و نهارت اللي جبرتني البنك باش نحل assurance تابع البنك سكرت معاهم عندي قريب العام ما رجعوليش حقي وين نمشي السياج مزال ماصبش هام يعملو في الحساب هاو رأس عام كل مرة حكاية ...",
+    "is_reclamation": "reclamation",
+    "category": "SINISTRE VIE",
+    "urgency": "elevee"
+  },
+  {
+    "text": "عيد فطر مبارك وكل عام وانتم بالف خير",
+    "is_reclamation": "non_reclamation",
+    "category": null,
+    "urgency": "faible"
+  },
+  {
+    "text": "لا موش صحيح MAE تعرف تقبض حق التأمين على السيارات ولا تسعى إلى رد حق المشترك اي التعويض على الحوادث وعندي الدليل القاطع من شهر جوان 2025 إلى حد هذا التاريخ مارس 2026 لم أحصل على إسترجاع حقي من الحادث مع كل شء واضح وتمام التمام حسبي الله ونعم الوكيل في من تكتم على حصولي على التعويض .",
+    "is_reclamation": "reclamation",
+    "category": "SINISTRE AUTO",
+    "urgency": "elevee"
+  },
+  {
+  "text": "عندي مشكل في التعويض متاع الحريق في الدار، الملف متاعي مازال معطل و ما فمّاش رد",
+  "is_reclamation": "reclamation",
+  "category": "SINISTRE IRDS",
+  "urgency": "elevee"
+}
+]

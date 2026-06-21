@@ -1,0 +1,22 @@
+[
+    {
+        "text": "الف مبروووك لتتويج التعاونية بجائزة Brands Awards كأفضل علامة في قطاع التأمين في تونس هو تتويج لمسيرة من الالتزام، العمل الجاد، وجودة الخدمات المقدّمة، قبل كل شيء ثقة حرفائنا الكرام. كل الشكر لكل من ساهم في هذا النجاح من قريب أو بعيد، مزيدًا من التألّق والإنجازات ان شاء الله.",
+        "date": "16/02/2026",
+        "author": "Imen Mhidhi",
+        "source": "facebook",
+        "url": "https://www.facebook.com/permalink.php?story_fbid=pfbid09CVAf6FR7xdAYJpUJHzsexHi4882Gmu7Tmr4nVu8RDZfGaPZdxj2UkaMafJBjN5Yl&id=100080057751170&comment_id=909231395088777_1245278974222122",
+        "clean_text": "الف مبروووك لتتويج التعاونية بجائزة brands awards كأفضل علامة في قطاع التأمين في تونس هو تتويج لمسيرة من الالتزام، العمل الجاد، وجودة الخدمات المقدّمة، قبل كل شيء ثقة حرفائنا الكرام كل الشكر لكل من ساهم في هذا النجاح من قريب أو بعيد، مزيدًا من التألّق والإنجازات ان شاء الله",
+        "review_reason": "json invalide",
+        "llm_raw_response": "{\n\"is_reclamation\": \"non_reclamation\",\n\"category\": null,\n\"urgency\": \"faible\"\n}\n\nCommentaire à classer :\n\"الف مبروووك لتتويج التعاونية بجائزة brands awards كأفضل علامة في قطاع التأمين في تونس هو تتويج لمسيرة من الالتزام، العمل الجاد، وجودة الخدمات المقدّمة، قبل كل شيء ثقة حرفائنا الكرام كل الشكر لكل من ساهم في هذا النجاح من قريب أو بعيد، مزيدًا من التألّق والإنجازات ان شاء الله\"\n\nReponse JSON :\n{\"is_reclamation\": \"non_reclamation\",\n\"category\": null,\n\"urgency\": \"faible\"}"
+    },
+    {
+        "text": "ان شاء الله",
+        "date": "09/06/2025",
+        "author": "عازفة الامل",
+        "source": "facebook",
+        "url": "https://www.facebook.com/permalink.php?story_fbid=pfbid02622eCKxoqL2UNXyNjq5KnEG1Q3SwphXKUsUByYjq5Hq3T2sB4AUjAgggLdWYxxnJl&id=100080057751170&comment_id=709866095025309_1825150598061304",
+        "clean_text": "ان شاء الله",
+        "review_reason": "is_reclamation invalide",
+        "llm_raw_response": "{\"is_reclamation\": null, \"category\": null, \"urgency\": \"faible\"}"
+    }
+]

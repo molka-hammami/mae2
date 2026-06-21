@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environnements virtuels
+.venv/
+venv/
+
+# Logs
+logs/
+*.log
+
+# Dossiers/fichiers sensibles Facebook
+data/facebook/.venv/
+data/facebook/__pycache__/
+data/facebook/fb_session/
+data/facebook/session/
+data/facebook/network_debug/
+data/facebook/cookies.json
+data/facebook/try_async*.json
+data/facebook/login_saved.png
+
+# Dossiers/fichiers sensibles LinkedIn
+data/linkedin/.venv/
+data/linkedin/linkedin_session.json
+data/linkedin/resultat_extraits.json
+
+# Egg info
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db

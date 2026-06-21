@@ -1,0 +1,15 @@
+is_reclamation:
+- reclamation
+- non_reclamation
+
+category:
+- SINISTRE AUTO
+- SINISTRE IRDS
+- SINISTRE VIE
+- SERVICE CLIENT
+
+
+urgency:
+- faible
+- moyenne
+- elevee
